@@ -2,6 +2,7 @@ let borderPoints = []
 let thermalPoints = []
 let circleMarker = []
 let polygon
+let polyMode = true;
 
 // Random value
 function rnd(min, max) {
@@ -11,6 +12,9 @@ function rnd(min, max) {
 
 // Handle on map clicks
 function onMapClick(e) {
+
+    if(polyMode == false)
+        return
 
     borderPoints.push(e.latlng)
 
@@ -85,9 +89,6 @@ function generate(){
     let maxDiameter = parseInt(document.getElementById("diameterMax").value)
     let minSpeed = parseInt(document.getElementById("speedMin").value)
     let maxSpeed = parseInt(document.getElementById("speedMax").value)
-
-    console.log("Lat " + minLat + " " + maxLat)
-
     
     // Generate and draw points
     for(var i = 0; i < count; i++){
@@ -100,15 +101,18 @@ function generate(){
 
         thermalPoints.push({"height": height, "diameter": diameter, "speed": speed, "lat": lat, "lng": lng})
 
-        console.log("Point " + lat + " " + lng)
-
-        var circle = L.circle([lat, lng], {
+        let circle = L.circle([lat, lng], {
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.5,
-            radius: 10
-        }).addTo(map);
+            radius: 200,
+            id: i
+        }).addTo(map)
 
+        circle.on("mousedown", function(){
+            console.log(circle.options.id);
+        })
+        
         circleMarker.push(circle);
         
     }
@@ -128,32 +132,4 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 }).addTo(map)
 
 map.on('click', onMapClick)
-
-
-/*
-var circle = L.circle([51.508, -0.11], {
-    color: 'red',
-    fillColor: '#f03',
-    fillOpacity: 0.5,
-    radius: 500
-}).addTo(map);
-*/
-
-/* 
-var polygon = L.polygon([
-    [51.509, -0.08],
-    [51.503, -0.06],
-    [51.51, -0.047]
-]).addTo(map);
-
-*/
-
-
-
-
-  
-
-  
-
-  
   
