@@ -1,14 +1,68 @@
 let borderPoints = []
-let thermalPoints = []
 let circleMarker = []
 let polygon
 let polyMode = true;
 
-// Random value
-function rnd(min, max) {
+// Util Methods
 
-    return Math.random() * (max - min) + min;
+// Calculates random value between min and max
+function rnd(min, max) {
+    return Math.random() * (max - min) + min
 }
+
+// Rounds to places before comma
+function round(num, places) {
+    var multiplier = Math.pow(10, places);
+    return Math.round(num * multiplier) / multiplier;
+}
+
+/*
+   Return the angle between two vectors on a plane
+   The angle is from vector 1 to vector 2, positive anticlockwise
+   The result is between -pi -> pi
+   (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html)
+*/
+function angle2D(x1, y1, x2, y2)
+{
+   let dtheta,theta1,theta2
+
+   theta1 = Math.atan2(y1,x1)
+   theta2 = Math.atan2(y2,x2)
+   dtheta = theta2 - theta1
+
+   while (dtheta > Math.PI)
+      dtheta -= (2* Math.PI)
+   while (dtheta < - Math.PI)
+      dtheta += (2* Math.PI)
+
+   return(dtheta)
+}
+
+/*
+    Checks if a given point p lies inside the polygon poly
+    (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html)
+*/
+function insidePolygon(poly, p)
+{
+    let angle = 0;
+    let p1 = {"lat": 0, "lng": 0}
+    let p2 = {"lat": 0, "lng": 0}
+    let n = poly.length
+
+    for (let i=0; i < n; i++) {
+        p1.lat = poly[i].lat - p.lat
+        p1.lng = poly[i].lng - p.lng
+        p2.lat = poly[(i+1) % n].lat - p.lat
+        p2.lng = poly[(i+1) % n].lng - p.lng
+        angle += angle2D(p1.lat,p1.lng,p2.lat,p2.lng)
+    }
+    
+    if (Math.abs(angle) < Math.PI)
+        return false
+    else
+        return true
+}
+ 
 
 // Handle on map clicks
 function onMapClick(e) {
@@ -40,11 +94,13 @@ function resetPolygon(){
     
     borderPoints = []
     polygon.remove(map)
+
+    polyMode = true
 }
 
 function generate(){
 
-    thermalPoints = []
+    polyMode = false
 
     for(var i = 0; i < circleMarker.length; i++){
         circleMarker[i].remove(map)
@@ -61,7 +117,7 @@ function generate(){
     let maxLng = -200
 
     // Get min and max lat
-    for(var i = 0; i < borderPoints.length; i++){
+    for(let i = 0; i < borderPoints.length; i++){
 
         let p = borderPoints[i];
 
@@ -79,8 +135,6 @@ function generate(){
 
     }
 
-    // Get min and max lng
-
     // Get values from ui
     let count = parseInt(document.getElementById("count").value)
     let minHeight = parseInt(document.getElementById("heightMin").value)
@@ -91,33 +145,100 @@ function generate(){
     let maxSpeed = parseInt(document.getElementById("speedMax").value)
     
     // Generate and draw points
-    for(var i = 0; i < count; i++){
+    i = 0;
 
-        let height = rnd(minHeight, maxHeight + 1)
-        let diameter = rnd(minDiameter, maxDiameter + 1)
-        let speed = rnd(minSpeed, maxSpeed + 1)
+    while(i < count){
+
+        // Position
         let lat = rnd(minLat, maxLat)
         let lng = rnd(minLng, maxLng)
 
-        thermalPoints.push({"height": height, "diameter": diameter, "speed": speed, "lat": lat, "lng": lng})
+        // Skip point if it was not generated inside the border polygon
+        if(!insidePolygon(borderPoints, {"lat": lat, "lng": lng}))
+            continue;
+
+        // Other parameters
+        let height = Math.round(rnd(minHeight, maxHeight + 1) / 100) * 100
+        let diameter = rnd(minDiameter, maxDiameter + 1).toFixed(1)
+        let speed = Math.round(rnd(minSpeed, maxSpeed + 1))
 
         let circle = L.circle([lat, lng], {
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.5,
             radius: 200,
-            id: i
-        }).addTo(map)
+            id: i,
+            "height": height,
+            "diameter": diameter,
+            "speed": speed
+        }).addTo(map).bindPopup("Lat " + lat.toFixed(5) + "<br>Lng " + lng.toFixed(5) + "<br>Height " + height + "<br>Diameter " + diameter + "<br>Speed " + speed)
 
-        circle.on("mousedown", function(){
-            console.log(circle.options.id);
+        circle.on({
+            mousedown: function () {
+                map.on('mousemove', function (e) {
+                    circle.setLatLng(e.latlng)
+                    circle.bindPopup("Lat " + e.latlng.lat.toFixed(5) + "<br>Lng " + e.latlng.lng.toFixed(5) + "<br>Height " + circle.options.height + "<br>Diameter " + circle.options.diameter + "<br>Speed " + circle.options.speed)
+                    map.dragging.disable()
+                })
+            }
         })
-        
-        circleMarker.push(circle);
+
+        map.on('mouseup',function(e){
+            map.removeEventListener('mousemove')
+            map.dragging.enable()
+        })
+
+        circleMarker.push(circle)
+
+        i++
         
     }
     
 }
+
+function saveAsCSV() {
+ 
+    var csv_data = [];
+
+    for (var i = 0; i < circleMarker.length; i++) {
+
+        let circle = circleMarker[i]
+        
+        var row = 'Location, ,thermal,' + circle._latlng.lat + ',' + circle._latlng.lng + ',' + circle.options.height + ', ,' + circle.options.diameter + ' ' + circle.options.speed
+
+        csv_data.push(row);
+    }
+
+    csv_data = csv_data.join('\n');
+ 
+    downloadCSVFile(csv_data)
+}
+
+/* https://www.geeksforgeeks.org/how-to-export-html-table-to-csv-using-javascript/ */
+function downloadCSVFile(csv_data) {
+ 
+    // Create CSV file object and feed our
+    // csv_data into it
+    CSVFile = new Blob([csv_data], { type: "text/csv" });
+ 
+    // Create to temporary link to initiate
+    // download process
+    var temp_link = document.createElement('a');
+ 
+    // Download csv file
+    temp_link.download = "GfG.csv";
+    var url = window.URL.createObjectURL(CSVFile);
+    temp_link.href = url;
+ 
+    // This link should not be displayed
+    temp_link.style.display = "none";
+    document.body.appendChild(temp_link);
+ 
+    // Automatically click the link to trigger download
+    temp_link.click();
+    document.body.removeChild(temp_link);
+}
+
 
 // Initialize map
 let map = L.map("map").setView([51.1874, 6.8263], 10)

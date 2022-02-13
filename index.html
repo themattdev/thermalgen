@@ -2,14 +2,14 @@
 <html>
 
 <head>
-	<title>Thermal</title>
+	<title>Thermal Position Generator</title>
 	<meta charset="UTF-8">
-	<meta name="viewport" content=
-		"width=device-width, initial-scale=1.0">
+    <meta name="author" content="Matthias Hesse">
+    <meta name="description" content="Tool to generate geo positions for thermals">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		
 	<!-- Leaflet CSS -->
-	<link rel="stylesheet" href=
-		"https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
 		integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
 		crossorigin="" />
 
@@ -23,8 +23,6 @@
 </head>
 
 <body>
-	<h1 class="heading">Thermal</h1>
-
     <div class="content">
 
         <div id="map"> </div>
@@ -42,11 +40,10 @@
 
             <input type="button" class="button" value="Generate" onclick="generate()">
             <input type="button" class="button" value="Reset" onclick="resetPolygon()">
+            <input type="button" class="button" value="Save" onclick="saveAsCSV()">
         </div>
 
-
     </div>
-
     
 	<script type="text/javascript" src="script.js"></script>
 </body>
