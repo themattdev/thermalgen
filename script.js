@@ -171,13 +171,13 @@ function generate(){
             "height": height,
             "diameter": diameter,
             "speed": speed
-        }).addTo(map).bindPopup("Lat " + lat.toFixed(5) + "<br>Lng " + lng.toFixed(5) + "<br>Height " + height + "<br>Diameter " + diameter + "<br>Speed " + speed)
+        }).addTo(map).bindPopup("Lat " + lat.toFixed(5) + "<br>Lng " + lng.toFixed(5) + "<br>Height " + height + " m<br>Diameter " + diameter + " nm<br>Speed " + speed + " kn")
 
         circle.on({
             mousedown: function () {
                 map.on('mousemove', function (e) {
                     circle.setLatLng(e.latlng)
-                    circle.bindPopup("Lat " + e.latlng.lat.toFixed(5) + "<br>Lng " + e.latlng.lng.toFixed(5) + "<br>Height " + circle.options.height + "<br>Diameter " + circle.options.diameter + "<br>Speed " + circle.options.speed)
+                    circle.bindPopup("Lat " + e.latlng.lat.toFixed(5) + "<br>Lng " + e.latlng.lng.toFixed(5) + "<br>Height " + circle.options.height + " m<br>Diameter " + circle.options.diameter + " nm<br>Speed " + circle.options.speed + " kn")
                     map.dragging.disable()
                 })
             }
@@ -226,7 +226,7 @@ function downloadCSVFile(csv_data) {
     var temp_link = document.createElement('a');
  
     // Download csv file
-    temp_link.download = "GfG.csv";
+    temp_link.download = "ThermalLocations.csv";
     var url = window.URL.createObjectURL(CSVFile);
     temp_link.href = url;
  
