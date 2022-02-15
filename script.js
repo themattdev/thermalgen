@@ -122,17 +122,23 @@ function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, m
     PointLoop:
     while(i < count){
 
-        let lat = rnd(minLat, maxLat)
-        let lng = rnd(minLng, maxLng)
-        let latlng = {"lat": lat, "lng": lng}
-        let diameter = rnd(minDiameter, maxDiameter).toFixed(1)
-        let radius = diameter * 0.5 * 1852
+        switch(mode){
+            // Uniform
+            case 0:
+                let lat = rnd(minLat, maxLat)
+                let lng = rnd(minLng, maxLng)
+                let latlng = {"lat": lat, "lng": lng}
+                let diameter = rnd(minDiameter, maxDiameter).toFixed(1)
 
-        // Skip point if it was not generated inside the border polygon
-        if(!insidePolygon(borderPoints, latlng))
-            continue PointLoop;
-        
-        positions.push({"latlng": latlng, "diameter": diameter})
+                // Skip point if it was not generated inside the border polygon
+                if(!insidePolygon(borderPoints, latlng))
+                    continue PointLoop;
+                
+                positions.push({"latlng": latlng, "diameter": diameter})
+
+            break;
+
+        }
 
         i++
     }
@@ -188,16 +194,16 @@ function generateThermals(){
     let minSpeed = parseInt(document.getElementById("speedMin").value)
     let maxSpeed = parseInt(document.getElementById("speedMax").value)
     
-    // Generate and draw points
+    // Generate positions with diameters
     let positions = generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter, 0)
 
     for(var i = 0; i < positions.length; i++){
 
-        // Position
+        // Read position and diameter
         let latlng = positions[i].latlng
         let diameter = positions[i].diameter
 
-        // Other parameters
+        // Generate other parameters
         let height = Math.round(rnd(minHeight, maxHeight + 1) / 100) * 100
         let speed = Math.round(rnd(minSpeed, maxSpeed + 1))
 
