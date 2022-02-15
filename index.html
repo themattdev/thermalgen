@@ -2,10 +2,10 @@
 <html>
 
 <head>
-	<title>Thermal Position Generator</title>
+	<title>Thermal gernerator for Kintic</title>
 	<meta charset="UTF-8">
     <meta name="author" content="Matthias Hesse">
-    <meta name="description" content="Tool to generate geo positions for thermals">
+    <meta name="description" content="Thermal gernerator for Kintic">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		
 	<!-- Leaflet CSS -->
@@ -28,6 +28,7 @@
         <div id="map"> </div>
 	
         <div class="inputWrapper">
+            <div class="version" onclick="showChangelog(true)">v 1.0.0</div>
             <label for="count">Count</label><input type="number" id="count" value="1000"> 
             <label for="heightMin">Height Min (m)</label><input type="number" id="heightMin" value="8000"> 
             <label for="heightMax">Height Max (m)</label><input type="number" id="heightMax" value="9000">
@@ -40,7 +41,20 @@
 
             <input type="button" class="button" value="Generate" onclick="generate()">
             <input type="button" class="button" value="Reset" onclick="resetPolygon()">
-            <input type="button" class="button" value="Save" onclick="saveAsCSV()">
+            <input type="button" class="button" value="Download CSV" onclick="saveAsCSV()">
+            
+        </div>
+
+        <div id="changeLog" class="changeLog hidden">
+            
+            
+            <div class="changeLogContent">
+                <div class="closeButton" onclick="showChangelog(false)"></div>
+                <h1>Changelog</h1>
+                <h2>v 1.0.0 15.02.2022</h2>
+                <p>Initial Release</p>
+            </div>
+            
         </div>
 
     </div>

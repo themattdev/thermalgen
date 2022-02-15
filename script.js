@@ -1,16 +1,16 @@
-let borderPoints = []
-let circleMarker = []
-let polygon
-let polyMode = true;
+let borderPoints = [] // List of points for the border polygon
+let circleMarker = [] // List of thermals as circles
+let polygon // Polygon on the map for all border points
+let polyMode = true; // Start in poly mode
 
-// Util Methods
+/* Util Methods */
 
-// Calculates random value between min and max
+/* Calculates random value between min and max (max not included) */
 function rnd(min, max) {
     return Math.random() * (max - min) + min
 }
 
-// Rounds to places before comma
+/* Rounds to places before comma */
 function round(num, places) {
     var multiplier = Math.pow(10, places);
     return Math.round(num * multiplier) / multiplier;
@@ -49,11 +49,14 @@ function insidePolygon(poly, p)
     let p2 = {"lat": 0, "lng": 0}
     let n = poly.length
 
+    // Loop over all points of the border polygone
     for (let i=0; i < n; i++) {
+        // Create vectors pair wise for the given point and points of the border polygon
         p1.lat = poly[i].lat - p.lat
         p1.lng = poly[i].lng - p.lng
         p2.lat = poly[(i+1) % n].lat - p.lat
         p2.lng = poly[(i+1) % n].lng - p.lng
+        // Sum the angle for the given point and all points for the border polygon
         angle += angle2D(p1.lat,p1.lng,p2.lat,p2.lng)
     }
     
@@ -63,41 +66,50 @@ function insidePolygon(poly, p)
         return true
 }
  
+/* Control Methods */
 
-// Handle on map clicks
+/* Handles click events for the map */
 function onMapClick(e) {
 
     if(polyMode == false)
         return
 
+    // Add geo position to polygon
     borderPoints.push(e.latlng)
 
+    // Remove old polygon
     if(polygon)
         polygon.remove(map)
 
+    // Draw new border polygon
     polygon = L.polygon([
         borderPoints
     ]).addTo(map)
 
 }
 
+/* Clears all thermals and removes the border polygon */
 function resetPolygon(){
 
+    // Remove thermals
     for(var i = 0; i < circleMarker.length; i++){
         circleMarker[i].remove(map)
     }
 
     circleMarker = []
 
+    // Remove polygon if it exist
     if(!polygon)
         return
     
     borderPoints = []
     polygon.remove(map)
 
+    // Enter poly mode to create a new border polygon
     polyMode = true
 }
 
+/* Generates thermals inside the border polygon and displays them on the map */
 function generate(){
 
     polyMode = false
@@ -162,6 +174,7 @@ function generate(){
         let diameter = rnd(minDiameter, maxDiameter + 1).toFixed(1)
         let speed = Math.round(rnd(minSpeed, maxSpeed + 1))
 
+        // Create circle with a popup
         let circle = L.circle([lat, lng], {
             color: 'red',
             fillColor: '#f03',
@@ -172,7 +185,8 @@ function generate(){
             "diameter": diameter,
             "speed": speed
         }).addTo(map).bindPopup("Lat " + lat.toFixed(5) + "<br>Lng " + lng.toFixed(5) + "<br>Height " + height + " m<br>Diameter " + diameter + " nm<br>Speed " + speed + " kn")
-
+        
+        // Add listener to allow moving circle
         circle.on({
             mousedown: function () {
                 map.on('mousemove', function (e) {
@@ -196,6 +210,7 @@ function generate(){
     
 }
 
+/* Convert all circle markers into csv data and auto download it */
 function saveAsCSV() {
  
     var csv_data = [];
@@ -204,7 +219,7 @@ function saveAsCSV() {
 
         let circle = circleMarker[i]
         
-        var row = 'Location, ,thermal,' + circle._latlng.lat + ',' + circle._latlng.lng + ',' + circle.options.height + ', ,' + circle.options.diameter + ' ' + circle.options.speed
+        var row = 'Location, ,thermal,' + circle._latlng.lat.toFixed(5) + ',' + circle._latlng.lng.toFixed(5) + ',' + circle.options.height + ', ,' + circle.options.diameter + ' ' + circle.options.speed
 
         csv_data.push(row);
     }
@@ -215,33 +230,40 @@ function saveAsCSV() {
 }
 
 /* https://www.geeksforgeeks.org/how-to-export-html-table-to-csv-using-javascript/ */
+/* Download a csv file with the given data */
 function downloadCSVFile(csv_data) {
- 
-    // Create CSV file object and feed our
-    // csv_data into it
+    
+    // Create object from data
     CSVFile = new Blob([csv_data], { type: "text/csv" });
+    
+    // Create an invisible link with reference to the file
+    var tmpLink = document.createElement('a');
  
-    // Create to temporary link to initiate
-    // download process
-    var temp_link = document.createElement('a');
- 
-    // Download csv file
-    temp_link.download = "ThermalLocations.csv";
+    tmpLink.download = "Thermal.csv";
     var url = window.URL.createObjectURL(CSVFile);
-    temp_link.href = url;
+    tmpLink.href = url;
  
-    // This link should not be displayed
-    temp_link.style.display = "none";
-    document.body.appendChild(temp_link);
- 
-    // Automatically click the link to trigger download
-    temp_link.click();
-    document.body.removeChild(temp_link);
+    tmpLink.style.display = "none";
+    document.body.appendChild(tmpLink);
+
+    // Auto click on the link and remove it
+    tmpLink.click();
+    document.body.removeChild(tmpLink);
 }
 
+function showChangelog(state){
+
+    if(state == true)
+    {
+        document.getElementById('changeLog').classList.remove('hidden')
+        return
+    }
+        
+    document.getElementById('changeLog').classList.add('hidden');
+}
 
 // Initialize map
-let map = L.map("map").setView([51.1874, 6.8263], 10)
+let map = L.map("map").setView([56.08385, -4.53681], 11)
 
 // Add tile layer
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
