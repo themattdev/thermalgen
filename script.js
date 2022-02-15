@@ -151,8 +151,8 @@ function generate(){
     let count = parseInt(document.getElementById("count").value)
     let minHeight = parseInt(document.getElementById("heightMin").value)
     let maxHeight = parseInt(document.getElementById("heightMax").value)
-    let minDiameter = parseInt(document.getElementById("diameterMin").value)
-    let maxDiameter = parseInt(document.getElementById("diameterMax").value)
+    let minDiameter = parseFloat(document.getElementById("diameterMin").value)
+    let maxDiameter = parseFloat(document.getElementById("diameterMax").value)
     let minSpeed = parseInt(document.getElementById("speedMin").value)
     let maxSpeed = parseInt(document.getElementById("speedMax").value)
     
@@ -171,7 +171,7 @@ function generate(){
 
         // Other parameters
         let height = Math.round(rnd(minHeight, maxHeight + 1) / 100) * 100
-        let diameter = rnd(minDiameter, maxDiameter + 1).toFixed(1)
+        let diameter = rnd(minDiameter, maxDiameter).toFixed(1)
         let speed = Math.round(rnd(minSpeed, maxSpeed + 1))
 
         // Create circle with a popup
@@ -179,7 +179,7 @@ function generate(){
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.5,
-            radius: 200,
+            radius: diameter * 0.5 * 1852,
             id: i,
             "height": height,
             "diameter": diameter,
@@ -263,7 +263,7 @@ function showChangelog(state){
 }
 
 // Initialize map
-let map = L.map("map").setView([56.08385, -4.53681], 11)
+let map = L.map("map").setView([56.08385, -4.53681], 13)
 
 // Add tile layer
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
