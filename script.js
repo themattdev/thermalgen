@@ -109,8 +109,40 @@ function resetPolygon(){
     polyMode = true
 }
 
+/* 
+Generate a geo position in a given range for lat and lng 
+mode: 0 = uniform, 1 = grid based
+*/
+function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter, mode){
+
+    let positions = []
+
+    let i = 0;
+
+    PointLoop:
+    while(i < count){
+
+        let lat = rnd(minLat, maxLat)
+        let lng = rnd(minLng, maxLng)
+        let latlng = {"lat": lat, "lng": lng}
+        let diameter = rnd(minDiameter, maxDiameter).toFixed(1)
+        let radius = diameter * 0.5 * 1852
+
+        // Skip point if it was not generated inside the border polygon
+        if(!insidePolygon(borderPoints, latlng))
+            continue PointLoop;
+        
+        positions.push({"latlng": latlng, "diameter": diameter})
+
+        i++
+    }
+
+    return positions
+
+}
+
 /* Generates thermals inside the border polygon and displays them on the map */
-function generate(){
+function generateThermals(){
 
     polyMode = false
 
@@ -157,25 +189,20 @@ function generate(){
     let maxSpeed = parseInt(document.getElementById("speedMax").value)
     
     // Generate and draw points
-    i = 0;
+    let positions = generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter, 0)
 
-    while(i < count){
+    for(var i = 0; i < positions.length; i++){
 
         // Position
-        let lat = rnd(minLat, maxLat)
-        let lng = rnd(minLng, maxLng)
-
-        // Skip point if it was not generated inside the border polygon
-        if(!insidePolygon(borderPoints, {"lat": lat, "lng": lng}))
-            continue;
+        let latlng = positions[i].latlng
+        let diameter = positions[i].diameter
 
         // Other parameters
         let height = Math.round(rnd(minHeight, maxHeight + 1) / 100) * 100
-        let diameter = rnd(minDiameter, maxDiameter).toFixed(1)
         let speed = Math.round(rnd(minSpeed, maxSpeed + 1))
 
         // Create circle with a popup
-        let circle = L.circle([lat, lng], {
+        let circle = L.circle([latlng.lat, latlng.lng], {
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.5,
@@ -184,14 +211,14 @@ function generate(){
             "height": height,
             "diameter": diameter,
             "speed": speed
-        }).addTo(map).bindPopup("Lat " + lat.toFixed(5) + "<br>Lng " + lng.toFixed(5) + "<br>Height " + height + " m<br>Diameter " + diameter + " nm<br>Speed " + speed + " kn")
+        }).addTo(map).bindPopup("Lat " + latlng.lat + "<br>Lng " + latlng.lng + "<br>Height " + height + " m<br>Diameter " + diameter + " nm<br>Speed " + speed + " kn")
         
         // Add listener to allow moving circle
         circle.on({
             mousedown: function () {
                 map.on('mousemove', function (e) {
                     circle.setLatLng(e.latlng)
-                    circle.bindPopup("Lat " + e.latlng.lat.toFixed(5) + "<br>Lng " + e.latlng.lng.toFixed(5) + "<br>Height " + circle.options.height + " m<br>Diameter " + circle.options.diameter + " nm<br>Speed " + circle.options.speed + " kn")
+                    circle.bindPopup("Lat " + e.latlng.lat + "<br>Lng " + e.latlng.lng + "<br>Height " + circle.options.height + " m<br>Diameter " + circle.options.diameter + " nm<br>Speed " + circle.options.speed + " kn")
                     map.dragging.disable()
                 })
             }
@@ -203,8 +230,6 @@ function generate(){
         })
 
         circleMarker.push(circle)
-
-        i++
         
     }
     
