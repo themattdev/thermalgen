@@ -65,6 +65,39 @@ function insidePolygon(poly, p)
     else
         return true
 }
+
+/*
+    Converts degree to radian
+*/
+function deg2rad(deg) {
+    return deg * (Math.PI/180)
+}
+
+/*
+    Calculates distance between two given latlng coordinates in nm
+*/
+function distance(lat1, lng1, lat2, lng2) {
+    var radiusEarth = 6371 
+
+    var dLat = deg2rad(lat2 - lat1)
+    var dLon = deg2rad(lng2 - lng1)
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2)
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    var dist = radiusEarth * c * 0.5399568
+
+    return dist
+  }
+
+function isOverlapping(p1, p2){
+
+    // Calculate distance and convert from km to nm
+    let dist = distance(p1.latlng.lat,p1.latlng.lng,p2.latlng.lat,p2.latlng.lng) 
+
+    if(dist < (p1.diameter) || dist < (p2.diameter))
+        return true
+
+    return false
+}
  
 /* Control Methods */
 
@@ -105,6 +138,8 @@ function resetPolygon(){
     borderPoints = []
     polygon.remove(map)
 
+    document.getElementById("pointCount").value = 0
+
     // Enter poly mode to create a new border polygon
     polyMode = true
 }
@@ -113,44 +148,63 @@ function resetPolygon(){
 Generate a geo position in a given range for lat and lng 
 mode: 0 = uniform, 1 = grid based
 */
-function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter, mode){
+function generatePositions(iterations, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter){
 
     let positions = []
 
     let i = 0;
 
-    PointLoop:
-    while(i < count){
+    // Generation
+    while(i < iterations){
 
-        switch(mode){
-            // Uniform
-            case 0:
-                let lat = rnd(minLat, maxLat)
-                let lng = rnd(minLng, maxLng)
-                let latlng = {"lat": lat, "lng": lng}
-                let diameter = rnd(minDiameter, maxDiameter).toFixed(1)
+        // Generate random position and diameter
+        let lat = rnd(minLat, maxLat)
+        let lng = rnd(minLng, maxLng)
+        let latlng = {"lat": lat, "lng": lng}
+        let diameter = rnd(minDiameter, maxDiameter).toFixed(1)
 
-                // Skip point if it was not generated inside the border polygon
-                if(!insidePolygon(borderPoints, latlng))
-                    continue PointLoop;
-                
-                positions.push({"latlng": latlng, "diameter": diameter})
-
-            break;
-
-        }
-
+        // Skip point if it was not generated inside the border polygon
+        if(!insidePolygon(borderPoints, latlng))
+            continue
+        
+        positions.push({"latlng": latlng, "diameter": diameter})
+            
         i++
     }
 
+    // Clean up
+    let removedPoints = true;
+
+    // Loop while points were removed in last iteration
+    while(removedPoints == true){
+
+        removedPoints = false
+
+        // Compare all points with each other
+        OuterLoop:
+        for(i = 0; i < positions.length; i++){
+
+            for(var j = 0; j < positions.length; j++){
+
+                if(i == j)
+                    continue
+
+                // Remove points if they are overlapping and restart loop
+                if(isOverlapping(positions[i], positions[j])){
+                    positions.splice(i, 1)
+                    removedPoints = true;
+                    break OuterLoop
+                }
+            }
+        }
+    }
+            
     return positions
 
 }
 
 /* Generates thermals inside the border polygon and displays them on the map */
 function generateThermals(){
-
-    polyMode = false
 
     for(var i = 0; i < circleMarker.length; i++){
         circleMarker[i].remove(map)
@@ -186,7 +240,7 @@ function generateThermals(){
     }
 
     // Get values from ui
-    let count = parseInt(document.getElementById("count").value)
+    let iterations = parseInt(document.getElementById("iterations").value)
     let minHeight = parseInt(document.getElementById("heightMin").value)
     let maxHeight = parseInt(document.getElementById("heightMax").value)
     let minDiameter = parseFloat(document.getElementById("diameterMin").value)
@@ -195,7 +249,7 @@ function generateThermals(){
     let maxSpeed = parseInt(document.getElementById("speedMax").value)
     
     // Generate positions with diameters
-    let positions = generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter, 0)
+    let positions = generatePositions(iterations, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter)
 
     for(var i = 0; i < positions.length; i++){
 
@@ -238,6 +292,10 @@ function generateThermals(){
         circleMarker.push(circle)
         
     }
+
+    document.getElementById("pointCount").value = circleMarker.length
+
+    polyMode = false
     
 }
 
