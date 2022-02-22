@@ -1,7 +1,8 @@
 let borderPoints = [] // List of points for the border polygon
 let circleMarker = [] // List of thermals as circles
 let polygon // Polygon on the map for all border points
-let polyMode = true; // Start in poly mode
+let mode = 0; // Start in move mode
+
 
 /* Util Methods */
 
@@ -16,12 +17,10 @@ function round(num, places) {
     return Math.round(num * multiplier) / multiplier;
 }
 
-/*
-   Return the angle between two vectors on a plane
-   The angle is from vector 1 to vector 2, positive anticlockwise
-   The result is between -pi -> pi
-   (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html)
-*/
+/*  Return the angle between two vectors on a plane
+    The angle is from vector 1 to vector 2, positive anticlockwise
+    The result is between -pi -> pi
+    (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html) */
 function angle2D(x1, y1, x2, y2)
 {
    let dtheta,theta1,theta2
@@ -38,10 +37,8 @@ function angle2D(x1, y1, x2, y2)
    return(dtheta)
 }
 
-/*
-    Checks if a given point p lies inside the polygon poly
-    (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html)
-*/
+/*  Checks if a given point p lies inside the polygon poly
+    (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html) */
 function insidePolygon(poly, p)
 {
     let angle = 0;
@@ -66,16 +63,12 @@ function insidePolygon(poly, p)
         return true
 }
 
-/*
-    Converts degree to radian
-*/
+/* Converts degree to radian */
 function deg2rad(deg) {
     return deg * (Math.PI/180)
 }
 
-/*
-    Calculates distance between two given latlng coordinates in nm
-*/
+/* Calculates distance between two given latlng coordinates in nm */
 function distance(lat1, lng1, lat2, lng2) {
     var radiusEarth = 6371 
 
@@ -86,7 +79,7 @@ function distance(lat1, lng1, lat2, lng2) {
     var dist = radiusEarth * c * 0.5399568
 
     return dist
-  }
+}
 
 function isOverlapping(p1, p2){
 
@@ -101,24 +94,77 @@ function isOverlapping(p1, p2){
  
 /* Control Methods */
 
+/*  Update the current control mode
+    0 = Move, 1 = Poly, 2 = Add, 3 = Delete */
+function setMode(newMode){
+    mode = newMode
+
+    document.getElementById("moveMode").classList.remove("active");
+    document.getElementById("polyMode").classList.remove("active");
+    document.getElementById("addMode").classList.remove("active");
+    document.getElementById("deleteMode").classList.remove("active");
+
+    switch(mode){
+        case 0:
+            document.getElementById("moveMode").classList.add("active");
+            break;
+        case 1:
+            document.getElementById("polyMode").classList.add("active");
+            break;
+        case 2:
+            document.getElementById("addMode").classList.add("active");
+            break;
+        case 3:
+            document.getElementById("deleteMode").classList.add("active");
+            break;
+    }
+
+    if(mode > 0)
+        map.dragging.disable();
+    else
+        map.dragging.enable();
+
+}
+
 /* Handles click events for the map */
 function onMapClick(e) {
+    
+    switch(mode){
+        case 1:
+            // Add geo position to polygon
+            borderPoints.push(e.latlng)
 
-    if(polyMode == false)
-        return
+            // Remove old polygon
+            if(polygon)
+                polygon.remove(map)
 
-    // Add geo position to polygon
-    borderPoints.push(e.latlng)
+            // Draw new border polygon
+            polygon = L.polygon([
+                borderPoints
+            ]).addTo(map)
+        break
+        case 2:
+            showAddDialog(e)
+        break
+    }
+    
+    
+}
 
-    // Remove old polygon
-    if(polygon)
-        polygon.remove(map)
+function showAddDialog(e){
 
-    // Draw new border polygon
-    polygon = L.polygon([
-        borderPoints
-    ]).addTo(map)
+    document.getElementById("addDialog").classList.remove("hidden")
+}
 
+function addThermal(){
+
+    document.getElementById("addDialog").classList.add("hidden")
+}
+
+function cancelDialog(){
+
+    document.getElementById("addDialog").classList.add("hidden")
+    
 }
 
 /* Clears all thermals and removes the border polygon */
@@ -140,14 +186,9 @@ function resetPolygon(){
 
     document.getElementById("pointCount").value = 0
 
-    // Enter poly mode to create a new border polygon
-    polyMode = true
 }
 
-/* 
-Generate a geo position in a given range for lat and lng 
-mode: 0 = uniform, 1 = grid based
-*/
+/* Generate a geo position in a given range for lat and lng */
 function generatePositions(iterations, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter){
 
     let positions = []
@@ -279,14 +320,12 @@ function generateThermals(){
                 map.on('mousemove', function (e) {
                     circle.setLatLng(e.latlng)
                     circle.bindPopup("Lat " + e.latlng.lat + "<br>Lng " + e.latlng.lng + "<br>Height " + circle.options.height + " m<br>Diameter " + circle.options.diameter + " nm<br>Speed " + circle.options.speed + " kn")
-                    map.dragging.disable()
                 })
             }
         })
 
         map.on('mouseup',function(e){
             map.removeEventListener('mousemove')
-            map.dragging.enable()
         })
 
         circleMarker.push(circle)
@@ -295,7 +334,7 @@ function generateThermals(){
 
     document.getElementById("pointCount").value = circleMarker.length
 
-    polyMode = false
+    setMode(0)
     
 }
 
