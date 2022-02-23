@@ -152,34 +152,41 @@ function showAddDialog(e){
 
     document.getElementById("addDialog").classList.remove("hidden")
 
+    document.getElementById("lat").value = e.latlng.lat.toFixed(5)
+    document.getElementById("lng").value = e.latlng.lng.toFixed(5)
+
     newLatLng = e.latlng
 }
 
-function addThermal(){
-
-    document.getElementById("addDialog").classList.add("hidden")
-
-    lastID++
-
-    let height = parseInt(document.getElementById("height").value)
-    let diameter = parseFloat(document.getElementById("diameter").value).toFixed(1)
-    let speed = parseInt(document.getElementById("speed").value)
-
-    height = Math.round(height / 100) * 100
-    speed = Math.round(speed)
+function addThermalToMap(id, latlng, height, diameter, speed){
 
     // Create circle with a popup
-    let circle = L.circle([newLatLng.lat, newLatLng.lng], {
+    let circle = L.circle([latlng.lat, latlng.lng], {
         color: 'red',
         fillColor: '#f03',
         fillOpacity: 0.5,
         radius: diameter * 0.5 * 1852,
-        id: lastID,
+        id: id,
         "height": height,
         "diameter": diameter,
         "speed": speed
-    }).addTo(map).bindPopup("Lat " + newLatLng.lat + "<br>Lng " + newLatLng.lng + "<br>Height " + height + " m<br>Diameter " + diameter + " nm<br>Speed " + speed + " kn")
+    }).addTo(map).bindPopup("Lat " + latlng.lat + "<br>Lng " + latlng.lng + "<br>Height " + height + " m<br>Diameter " + diameter + " nm<br>Speed " + speed + " kn")
     
+    // On click handler for deleting thermals
+    circle.on("click", function(e){
+        if(mode == 3){
+            for(var i = 0; i < circleMarker.length; i++){
+                if(circleMarker[i].options.id == i){
+                    circleMarker.splice(i, 1)
+                    document.getElementById("pointCount").value = circleMarker.length
+                    break
+                }
+            }
+            map.removeLayer(circle)
+            return
+        }
+    })
+
     // Add listener to allow moving circle
     circle.on({
         mousedown: function () {
@@ -195,11 +202,35 @@ function addThermal(){
         }
     })
 
+    map.on('mouseup',function(e){
+        map.removeEventListener('mousemove')
+        map.dragging.enable();
+    })
+
     circleMarker.push(circle)
 
     document.getElementById("pointCount").value = circleMarker.length
+
 }
 
+/* Called by ui to add a single thermal */
+function addThermal(){
+
+    document.getElementById("addDialog").classList.add("hidden")
+
+    let height = parseInt(document.getElementById("height").value)
+    let diameter = parseFloat(document.getElementById("diameter").value).toFixed(1)
+    let speed = parseInt(document.getElementById("speed").value)
+
+    height = Math.round(height / 100) * 100
+    speed = Math.round(speed)
+
+    addThermalToMap(lastID, newLatLng, height, diameter, speed)
+
+    lastID++
+}
+
+/* Cancel the add thermal dialog */
 function cancelDialog(){
 
     document.getElementById("addDialog").classList.add("hidden")
@@ -341,47 +372,11 @@ function generateThermals(){
         let height = Math.round(rnd(minHeight, maxHeight + 1) / 100) * 100
         let speed = Math.round(rnd(minSpeed, maxSpeed + 1))
 
-        // Create circle with a popup
-        let circle = L.circle([latlng.lat, latlng.lng], {
-            color: 'red',
-            fillColor: '#f03',
-            fillOpacity: 0.5,
-            radius: diameter * 0.5 * 1852,
-            id: i,
-            "height": height,
-            "diameter": diameter,
-            "speed": speed
-        }).addTo(map).bindPopup("Lat " + latlng.lat + "<br>Lng " + latlng.lng + "<br>Height " + height + " m<br>Diameter " + diameter + " nm<br>Speed " + speed + " kn")
+        addThermalToMap(i, latlng, height, diameter, speed)
         
         lastID = i
-
-        // Add listener to allow moving circle
-        circle.on({
-            mousedown: function () {
-                map.on('mousemove', function (e) {
-
-                    if(mode > 0)
-                        return
-
-                    circle.setLatLng(e.latlng)
-                    circle.bindPopup("Lat " + e.latlng.lat + "<br>Lng " + e.latlng.lng + "<br>Height " + circle.options.height + " m<br>Diameter " + circle.options.diameter + " nm<br>Speed " + circle.options.speed + " kn")
-                    map.dragging.disable();
-                })
-            }
-        })
-
-        map.on('mouseup',function(e){
-            map.removeEventListener('mousemove')
-            map.dragging.enable();
-        })
-
-        circleMarker.push(circle)
         
     }
-
-    document.getElementById("pointCount").value = circleMarker.length
-
-    setMode(0)
     
 }
 

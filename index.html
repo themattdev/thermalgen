@@ -73,13 +73,15 @@
         </div>
 
         <div id="addDialog" class="overlayWrapper hidden">
-            <div class="wrapperContent">
+            <div class="wrapperContent gap flex">
+                <label for="lat">Lat</label><input type="number" id="lat" value="" disabled> 
+                <label for="lng">Lng</label><input type="number" id="lng" value="" disabled> 
                 <label for="height">Height (m)</label><input type="number" id="height" value="8000"> 
                 <label for="diameter">Diameter (nm)</label><input type="number" id="diameter" value="0.3">
                 <label for="speed">Speed (kn)</label><input type="number" id="speed" value="4">
                 <div class="dialogButtons">
-                    <input type="button" class="button horizontalGap verticalGap" value="Add" onclick="addThermal()">
-                    <input type="button" class="button horizontalGap verticalGap" value="Cancel" onclick="cancelDialog()">
+                    <input type="button" class="button" value="Add" onclick="addThermal()">
+                    <input type="button" class="button" value="Cancel" onclick="cancelDialog()">
                 </div>
             </div>
         </div>
