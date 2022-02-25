@@ -28,7 +28,7 @@
         <div id="map"> </div>
 	
         <div class="inputWrapper">
-            <div class="version" onclick="showChangelog(true)">v 1.1.0</div>
+            <div class="version" onclick="showChangelog(true)">v 2.0.0</div>
 
             <div class="controls">
                 <div id="moveMode" class="controlBtn move active" onclick="setMode(0)"></div>
@@ -37,7 +37,7 @@
                 <div id="deleteMode" class="controlBtn broom" onclick="setMode(3)"></div>
             </div>
 
-            <label for="iterations">Iterations</label><input type="number" id="iterations" value="50"> 
+            <label for="count">Count</label><input type="number" id="count" value="50"> 
             <label for="heightMin">Height Min (m)</label><input type="number" id="heightMin" value="8000"> 
             <label for="heightMax">Height Max (m)</label><input type="number" id="heightMax" value="9000">
 
@@ -48,7 +48,7 @@
             <label for="speedMax">Speed Max (kn)</label><input type="number" id="speedMax" value="7">
 
             <input type="button" class="button" value="Generate" onclick="generateThermals()">
-            <input type="button" class="button" value="Reset" onclick="resetPolygon()">
+            <input type="button" class="button" value="Reset" onclick="reset()">
             <input type="button" class="button" value="Download CSV" onclick="saveAsCSV()">
 
             <label for="pointCount">Generated thermals</label><input type="number" id="pointCount" value="0" disabled>
@@ -60,8 +60,10 @@
             <div class="wrapperContent">
                 <div class="closeButton" onclick="showChangelog(false)"></div>
                 <h1>Changelog</h1>
-                <h2>v 1.1.0 22.02.2022</h2>
-                <p>Todo</p>
+                <h2>v 2.0.0 25.02.2022</h2>
+                <p>Added tool for manually adding thermals</p>
+                <p>Added tool for deleting thermals</p>
+                <p>Optimized generation of thermals</p>
                 <h2>v 1.0.1 21.02.2022</h2>
                 <p>Removed overlapping thermals</p>
                 <p>Changed parameter count to iterations</p>

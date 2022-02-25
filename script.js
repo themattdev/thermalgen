@@ -123,6 +123,16 @@ function setMode(newMode){
 
 }
 
+function disablePolyTool(state){
+    if(state == true)
+        document.getElementById("polyMode").classList.add("hidden")
+    else
+    document.getElementById("polyMode").classList.remove("hidden")
+
+    if(state == true && mode == 1)
+        setMode(0)
+}
+
 /* Handles click events for the map */
 function onMapClick(e) {
     
@@ -238,7 +248,7 @@ function cancelDialog(){
 }
 
 /* Clears all thermals and removes the border polygon */
-function resetPolygon(){
+function reset(){
 
     // Remove thermals
     for(var i = 0; i < circleMarker.length; i++){
@@ -256,17 +266,23 @@ function resetPolygon(){
 
     document.getElementById("pointCount").value = 0
 
+    disablePolyTool(false)
+
 }
 
-/* Generate a geo position in a given range for lat and lng */
-function generatePositions(iterations, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter){
+/* Generate geo positions in a given range for lat and lng */
+function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter){
 
     let positions = []
 
     let i = 0;
 
+    let iterationTimeout = 1000
+    let iterationCount = 0
+
     // Generation
-    while(i < iterations){
+    GenerationLoop:
+    while(i < count  && iterationCount < iterationTimeout){
 
         // Generate random position and diameter
         let lat = rnd(minLat, maxLat)
@@ -276,38 +292,32 @@ function generatePositions(iterations, minLat, maxLat, minLng, maxLng, minDiamet
 
         // Skip point if it was not generated inside the border polygon
         if(!insidePolygon(borderPoints, latlng))
-            continue
-        
-        positions.push({"latlng": latlng, "diameter": diameter})
+        {   
+            iterationCount++
+            continue GenerationLoop
+        }
             
-        i++
-    }
-
-    // Clean up
-    let removedPoints = true;
-
-    // Loop while points were removed in last iteration
-    while(removedPoints == true){
-
-        removedPoints = false
+        let p = {"latlng": latlng, "diameter": diameter}
 
         // Compare all points with each other
         OuterLoop:
         for(i = 0; i < positions.length; i++){
 
-            for(var j = 0; j < positions.length; j++){
-
-                if(i == j)
-                    continue
-
-                // Remove points if they are overlapping and restart loop
-                if(isOverlapping(positions[i], positions[j])){
-                    positions.splice(i, 1)
-                    removedPoints = true;
-                    break OuterLoop
-                }
+            // Remove points if they are overlapping and restart loop
+            if(isOverlapping(positions[i], p))
+            {
+                iterationCount++
+                continue GenerationLoop
             }
+                
         }
+        
+        positions.push(p)
+
+        iterationCount = 0
+
+        i++
+
     }
             
     return positions
@@ -351,7 +361,7 @@ function generateThermals(){
     }
 
     // Get values from ui
-    let iterations = parseInt(document.getElementById("iterations").value)
+    let count = parseInt(document.getElementById("count").value)
     let minHeight = parseInt(document.getElementById("heightMin").value)
     let maxHeight = parseInt(document.getElementById("heightMax").value)
     let minDiameter = parseFloat(document.getElementById("diameterMin").value)
@@ -360,7 +370,7 @@ function generateThermals(){
     let maxSpeed = parseInt(document.getElementById("speedMax").value)
     
     // Generate positions with diameters
-    let positions = generatePositions(iterations, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter)
+    let positions = generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter)
 
     for(var i = 0; i < positions.length; i++){
 
@@ -377,6 +387,8 @@ function generateThermals(){
         lastID = i
         
     }
+
+    disablePolyTool(true)
     
 }
 
