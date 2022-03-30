@@ -392,28 +392,97 @@ function generateThermals(){
     
 }
 
+function dumpStyle(){
+    let testElemt = document.getElementById("downBtn")
+    var cs = window.getComputedStyle(testElemt,null);
+    var len = cs.length;
+    for (var i=0;i<len;i++) {
+
+        var style = cs[i];
+        console.log(style+" : "+cs.getPropertyValue(style));
+    }
+}
+
+
+function loadBoarder(file){
+
+
+    if (file.files && file.files[0]) {
+        let reader = new FileReader();
+        reader.readAsBinaryString(file.files[0]);
+        reader.onload = function (e) {
+            
+            let dataFile = e.target.result
+
+            let lbreak = dataFile.split("\n")
+
+            borderPoints = []
+
+            lbreak.forEach(res => {
+                borderPoints.push(res.split(","));
+            });
+
+            if(polygon)
+                polygon.remove(map)
+                
+
+            // Draw new border polygon
+            polygon = L.polygon([
+                borderPoints
+            ]).addTo(map)
+                    
+        }
+    }
+}
+
 /* Convert all circle markers into csv data and auto download it */
-function saveAsCSV() {
+function saveAsCSV(option) {
  
-    var csv_data = [];
+    var csv_data = []
 
-    for (var i = 0; i < circleMarker.length; i++) {
+    let fileName = ''
 
-        let circle = circleMarker[i]
+    switch(option){
+    
+        case 'thermals':
+            for (var i = 0; i < circleMarker.length; i++) {
         
-        var row = 'Location, ,thermal,' + circle._latlng.lat.toFixed(5) + ',' + circle._latlng.lng.toFixed(5) + ',' + circle.options.height + ', ,' + circle.options.diameter + ' ' + circle.options.speed
+                let circle = circleMarker[i]
+                
+                var row = 'Location, ,thermal,' + circle._latlng.lat.toFixed(5) + ',' + circle._latlng.lng.toFixed(5) + ',' + circle.options.height + ', ,' + circle.options.diameter + ' ' + circle.options.speed
+        
+                csv_data.push(row)
+            }
+            fileName = 'Thermal.csv'
+        break;
+        case 'border':
 
-        csv_data.push(row);
+            if (borderPoints.length == 0)
+                return;
+
+            for (var i = 0; i < borderPoints.length; i++) {
+        
+                let borderPoint = borderPoints[i]
+                
+                let row = borderPoint.lat + ',' + borderPoint.lng
+        
+                csv_data.push(row)
+            }
+            fileName = 'Border.csv'
+        break;
+        default:
+            return
+            break;
     }
 
-    csv_data = csv_data.join('\n');
+    csv_data = csv_data.join('\n')
  
-    downloadCSVFile(csv_data)
+    downloadCSVFile(csv_data, fileName)
 }
 
 /* https://www.geeksforgeeks.org/how-to-export-html-table-to-csv-using-javascript/ */
 /* Download a csv file with the given data */
-function downloadCSVFile(csv_data) {
+function downloadCSVFile(csv_data, filename) {
     
     // Create object from data
     CSVFile = new Blob([csv_data], { type: "text/csv" });
@@ -421,7 +490,7 @@ function downloadCSVFile(csv_data) {
     // Create an invisible link with reference to the file
     var tmpLink = document.createElement('a');
  
-    tmpLink.download = "Thermal.csv";
+    tmpLink.download = filename;
     var url = window.URL.createObjectURL(CSVFile);
     tmpLink.href = url;
  
