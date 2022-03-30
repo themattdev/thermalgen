@@ -1,0 +1,22 @@
+{
+  "name": "thermalgen",
+  "version": "1.0.0",
+  "description": "Thermalgen",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/themattdev/thermalgen.git"
+  },
+  "author": "Matthias Hesse",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/themattdev/thermalgen/issues"
+  },
+  "homepage": "https://github.com/themattdev/thermalgen#readme",
+  "devDependencies": {
+    "electron": "^18.0.0"
+  }
+}
