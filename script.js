@@ -1,9 +1,14 @@
 let borderPoints = [] // List of points for the border polygon
+let borderHoles = [] // List of all holes in the border polygon
+let holeIndex = -1
 let circleMarker = [] // List of thermals as circles
+let thermals = [] // List of thermals
 let polygon // Polygon on the map for all border points
 let mode = 0 // Start in move mode
 let lastID = 0
-let newLatLng;
+let newLatLng
+let history = []
+let isPolyToolActive = true
 
 /* Util Methods */
 
@@ -105,6 +110,7 @@ function setMode(newMode){
     document.getElementById("polyMode").classList.remove("active");
     document.getElementById("addMode").classList.remove("active");
     document.getElementById("deleteMode").classList.remove("active");
+    document.getElementById("holeMode").classList.remove("active");
 
     switch(mode){
         case 0:
@@ -119,25 +125,101 @@ function setMode(newMode){
         case 3:
             document.getElementById("deleteMode").classList.add("active");
             break;
+        case 4:
+            document.getElementById("holeMode").classList.add("active");
+            holeIndex += 1
+            borderHoles.push([])
+            break;
+
     }
 
 }
 
 function disablePolyTool(state){
     if(state == true)
+    {
         document.getElementById("polyMode").classList.add("hidden")
+        document.getElementById("holeMode").classList.add("hidden")
+        isPolyToolActive = false
+    }
     else
-    document.getElementById("polyMode").classList.remove("hidden")
+    {
+        document.getElementById("polyMode").classList.remove("hidden")
+        document.getElementById("holeMode").classList.remove("hidden")
+        isPolyToolActive = true
+    }
+    
 
     if(state == true && mode == 1)
         setMode(0)
+}
+
+function undo(){
+
+    if(history.length == 0)
+        return
+
+    // Remove old polygon
+    if(polygon)
+        polygon.remove(map)
+
+    for(var i = 0; i < circleMarker.length; i++){
+        circleMarker[i].remove(map)
+    }
+
+    // Load values
+    let step = history.pop()
+
+    borderPoints = step.borderPoints.slice()
+    borderHoles =  step.borderHoles.slice()
+    circleMarker =  step.circleMarker.slice()
+    holeIndex =  step.holeIndex
+    thermals = step.thermals.slice()
+    isPolyToolActive = step.isPolyToolActive
+
+    disablePolyTool(!isPolyToolActive)
+
+    // Draw new border polygon
+    polygon = L.polygon([
+        borderPoints,
+        borderHoles
+    ]).addTo(map)
+
+    circleMarker = []
+
+    // Draw thermals
+    for(var i = 0; i < thermals.length; i++){
+        let t = thermals[i]
+        addThermalToMap(t.id, t.latlng, t.height, t.diameter, t.speed)
+    }
+
+}
+
+function addHistory(){
+
+    let oldBorderHoles = []
+
+    for (var i = 0; i < borderHoles.length; i++)
+        oldBorderHoles[i] = borderHoles[i].slice();
+
+    let step = {
+        'borderPoints': borderPoints.slice(),
+        'borderHoles': oldBorderHoles,
+        'circleMarker': circleMarker.slice(),
+        'holeIndex': holeIndex,
+        'thermals': thermals.slice(),
+        'isPolyToolActive': isPolyToolActive
+    }
+
+    history.push(step)
 }
 
 /* Handles click events for the map */
 function onMapClick(e) {
     
     switch(mode){
-        case 1:
+        case  1:
+            addHistory()
             // Add geo position to polygon
             borderPoints.push(e.latlng)
 
@@ -147,14 +229,31 @@ function onMapClick(e) {
 
             // Draw new border polygon
             polygon = L.polygon([
-                borderPoints
+                borderPoints,
+                borderHoles
             ]).addTo(map)
+
         break
         case 2:
             showAddDialog(e)
         break
+        case 4:
+            addHistory()
+
+            borderHoles[holeIndex].push(e.latlng)
+
+            // Remove old polygon
+            if(polygon)
+                polygon.remove(map)
+
+            // Draw new border polygon
+            polygon = L.polygon([
+                borderPoints,
+                borderHoles
+            ]).addTo(map)
+
+        break
     }
-    
     
 }
 
@@ -226,6 +325,8 @@ function addThermalToMap(id, latlng, height, diameter, speed){
 /* Called by ui to add a single thermal */
 function addThermal(){
 
+    addHistory()
+
     document.getElementById("addDialog").classList.add("hidden")
 
     let height = parseInt(document.getElementById("height").value)
@@ -234,6 +335,16 @@ function addThermal(){
 
     height = Math.round(height / 100) * 100
     speed = Math.round(speed)
+
+    let t = {
+        'id': lastID,
+        'latlng': newLatLng,
+        'height': height,
+        'diameter': diameter,
+        'speed': speed
+    }
+
+    thermals.push(t)
 
     addThermalToMap(lastID, newLatLng, height, diameter, speed)
 
@@ -249,6 +360,8 @@ function cancelDialog(){
 
 /* Clears all thermals and removes the border polygon */
 function reset(){
+
+    addHistory()
 
     // Remove thermals
     for(var i = 0; i < circleMarker.length; i++){
@@ -296,11 +409,16 @@ function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, m
             iterationCount++
             continue GenerationLoop
         }
+
+        // Skip point if it was generated inside a hole polygon
+        for(i = 0; i < borderHoles.length; i++){
+            if(insidePolygon(borderHoles[i], latlng))
+                continue GenerationLoop
+        }
             
         let p = {"latlng": latlng, "diameter": diameter}
 
         // Compare all points with each other
-        OuterLoop:
         for(i = 0; i < positions.length; i++){
 
             // Remove points if they are overlapping and restart loop
@@ -326,6 +444,8 @@ function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, m
 
 /* Generates thermals inside the border polygon and displays them on the map */
 function generateThermals(){
+
+    addHistory()
 
     for(var i = 0; i < circleMarker.length; i++){
         circleMarker[i].remove(map)
@@ -382,6 +502,16 @@ function generateThermals(){
         let height = Math.round(rnd(minHeight, maxHeight + 1) / 100) * 100
         let speed = Math.round(rnd(minSpeed, maxSpeed + 1))
 
+        let t = {
+            'id': i,
+            'latlng': latlng,
+            'height': height,
+            'diameter': diameter,
+            'speed': speed
+        }
+        
+        thermals.push(t)
+
         addThermalToMap(i, latlng, height, diameter, speed)
         
         lastID = i
@@ -392,20 +522,9 @@ function generateThermals(){
     
 }
 
-function dumpStyle(){
-    let testElemt = document.getElementById("downBtn")
-    var cs = window.getComputedStyle(testElemt,null);
-    var len = cs.length;
-    for (var i=0;i<len;i++) {
-
-        var style = cs[i];
-        console.log(style+" : "+cs.getPropertyValue(style));
-    }
-}
-
-
 function loadBoarder(file){
 
+    addHistory()
 
     if (file.files && file.files[0]) {
         let reader = new FileReader();
@@ -418,18 +537,51 @@ function loadBoarder(file){
 
             borderPoints = []
 
-            lbreak.forEach(res => {
-                borderPoints.push(res.split(","));
-            });
+            borderHoles = []
+
+            hole = []
+
+            borderComplete = false;
+
+            for(var i = 0; i < lbreak.length; i++){
+
+                let line = lbreak[i]
+
+                // Skip first header
+                if(line.startsWith('border'))
+                    continue
+
+                // Create new hole
+                if(line.startsWith('hole')){
+                    if(borderComplete == true){
+                        borderHoles.push(hole)
+                    }
+                    borderComplete = true;
+                    holeIndex += 1
+                    hole = []
+                    continue
+                }
+
+                 // Add points to border
+                if(borderComplete == false){
+                    borderPoints.push(line.split(","))
+                }
+                else{
+                    hole.push(line.split(","))
+                }
+            }
+
+            if(hole.length > 0)
+                borderHoles.push(hole)
 
             if(polygon)
                 polygon.remove(map)
                 
-
             // Draw new border polygon
-            polygon = L.polygon([
-                borderPoints
-            ]).addTo(map)
+             polygon = L.polygon([
+                 borderPoints,
+                 borderHoles
+             ]).addTo(map)
                     
         }
     }
@@ -460,6 +612,8 @@ function saveAsCSV(option) {
             if (borderPoints.length == 0)
                 return;
 
+            csv_data.push('border')
+
             for (var i = 0; i < borderPoints.length; i++) {
         
                 let borderPoint = borderPoints[i]
@@ -468,6 +622,21 @@ function saveAsCSV(option) {
         
                 csv_data.push(row)
             }
+        
+            for(var i = 0; i < borderHoles.length; i++){
+                csv_data.push('hole_' + i)
+
+                let hole = borderHoles[i];
+
+                for(var j = 0; j < hole.length; j++){
+
+                    let row = hole[j].lat + ',' + hole[j].lng
+        
+                    csv_data.push(row)
+
+                }
+            }
+
             fileName = 'Border.csv'
         break;
         default:

@@ -33,12 +33,15 @@
             <div class="controls">
                 <div id="moveMode" class="controlBtn move active" onclick="setMode(0)"></div>
                 <div id="polyMode" class="controlBtn pencil" onclick="setMode(1)"></div>
+                <div id="holeMode" class="controlBtn scissors" onclick="setMode(4)"></div>
                 <div id="addMode" class="controlBtn marker" onclick="setMode(2)"></div>
+            </div>
+            <div class="controls">
                 <div id="deleteMode" class="controlBtn broom" onclick="setMode(3)"></div>
+                <div id="undoBtn" class="controlBtn undo" onclick="undo()"></div>
                 <div id="deleteMode" class="controlBtn disk" onclick="saveAsCSV('border')"></div>
                 <input type="file" id="upload" onChange="loadBoarder(this)" >
                 <label for="upload" class="controlBtn upload"></label>
-                
             </div>
 
             <label for="count">Count</label><input type="number" id="count" value="50"> 
@@ -55,9 +58,6 @@
             <input type="button" class="button" value="Reset" onclick="reset()">
             <input id="downBtn" type="button" class="button" value="Download CSV" onclick="saveAsCSV('thermals')">
            
-            
-            
-
             <label for="pointCount">Generated thermals</label><input type="number" id="pointCount" value="0" disabled>
             
         </div>
@@ -67,8 +67,10 @@
             <div class="wrapperContent">
                 <div class="closeButton" onclick="showChangelog(false)"></div>
                 <h1>Changelog</h1>
-                <h2>v 2.1.0 30.03.2022</h2>
+                <h2>v 2.1.0 31.03.2022</h2>
                 <p>Added tools for saving and loading boundary</p>
+                <p>Added tool for creating boundary holes</p>
+                <p>Added tool for reverting last action</p>
                 <h2>v 2.0.0 25.02.2022</h2>
                 <p>Added tool for manually adding thermals</p>
                 <p>Added tool for deleting thermals</p>
