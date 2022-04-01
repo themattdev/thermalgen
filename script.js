@@ -4,6 +4,7 @@ let holeIndex = -1
 let circleMarker = [] // List of thermals as circles
 let thermals = [] // List of thermals
 let polygon // Polygon on the map for all border points
+let holePolygon
 let mode = 0 // Start in move mode
 let lastID = 0
 let newLatLng
@@ -159,9 +160,6 @@ function undo(){
     if(history.length == 0)
         return
 
-    // Remove old polygon
-    if(polygon)
-        polygon.remove(map)
 
     for(var i = 0; i < circleMarker.length; i++){
         circleMarker[i].remove(map)
@@ -179,11 +177,7 @@ function undo(){
 
     disablePolyTool(!isPolyToolActive)
 
-    // Draw new border polygon
-    polygon = L.polygon([
-        borderPoints,
-        borderHoles
-    ]).addTo(map)
+    drawBorder()
 
     circleMarker = []
 
@@ -223,15 +217,7 @@ function onMapClick(e) {
             // Add geo position to polygon
             borderPoints.push(e.latlng)
 
-            // Remove old polygon
-            if(polygon)
-                polygon.remove(map)
-
-            // Draw new border polygon
-            polygon = L.polygon([
-                borderPoints,
-                borderHoles
-            ]).addTo(map)
+            drawBorder()
 
         break
         case 2:
@@ -242,15 +228,7 @@ function onMapClick(e) {
 
             borderHoles[holeIndex].push(e.latlng)
 
-            // Remove old polygon
-            if(polygon)
-                polygon.remove(map)
-
-            // Draw new border polygon
-            polygon = L.polygon([
-                borderPoints,
-                borderHoles
-            ]).addTo(map)
+            drawBorder()
 
         break
     }
@@ -265,6 +243,25 @@ function showAddDialog(e){
     document.getElementById("lng").value = e.latlng.lng.toFixed(5)
 
     newLatLng = e.latlng
+}
+
+function drawBorder(){
+
+    if(polygon)
+        polygon.remove(map)
+
+    if(holePolygon)
+        holePolygon.remove(map)
+    
+    // Draw new border polygon
+    polygon = L.polygon([
+        borderPoints
+        
+    ]).addTo(map)
+
+    holePolygon = L.polygon([
+        borderHoles
+    ], {color:'green'}).addTo(map)
 }
 
 function addThermalToMap(id, latlng, height, diameter, speed){
@@ -352,16 +349,21 @@ function addThermal(){
 }
 
 /* Cancel the add thermal dialog */
-function cancelDialog(){
+function cancelDialog(id){
 
-    document.getElementById("addDialog").classList.add("hidden")
+    document.getElementById(id).classList.add("hidden")
     
+}
+
+function confirmReset(){
+
+    document.getElementById("resetDialog").classList.remove("hidden")
 }
 
 /* Clears all thermals and removes the border polygon */
 function reset(){
 
-    addHistory()
+    document.getElementById("resetDialog").classList.add("hidden")
 
     // Remove thermals
     for(var i = 0; i < circleMarker.length; i++){
@@ -369,17 +371,23 @@ function reset(){
     }
 
     circleMarker = []
+    borderPoints = []
+    borderHoles = []
+    history = []
+    holeIndex = -1
 
     // Remove polygon if it exist
-    if(!polygon)
-        return
-    
-    borderPoints = []
-    polygon.remove(map)
+    if(polygon)
+        polygon.remove(map)
+
+    if(holePolygon)
+        holePolygon.remove(map)
 
     document.getElementById("pointCount").value = 0
 
     disablePolyTool(false)
+
+    setMode(0)
 
 }
 
@@ -524,6 +532,9 @@ function generateThermals(){
 
 function loadBoarder(file){
 
+    if(!file)
+        return
+
     addHistory()
 
     if (file.files && file.files[0]) {
@@ -562,29 +573,26 @@ function loadBoarder(file){
                     continue
                 }
 
+                let p = {'lat': parseFloat(line.split(",")[0]), 'lng': parseFloat(line.split(",")[1])}
+
                  // Add points to border
                 if(borderComplete == false){
-                    borderPoints.push(line.split(","))
+                    borderPoints.push(p)
                 }
                 else{
-                    hole.push(line.split(","))
+                    hole.push(p)
                 }
             }
 
             if(hole.length > 0)
                 borderHoles.push(hole)
 
-            if(polygon)
-                polygon.remove(map)
-                
-            // Draw new border polygon
-             polygon = L.polygon([
-                 borderPoints,
-                 borderHoles
-             ]).addTo(map)
+            drawBorder()
                     
         }
     }
+
+    document.getElementById('upload').value = ''
 }
 
 /* Convert all circle markers into csv data and auto download it */
@@ -608,6 +616,8 @@ function saveAsCSV(option) {
             fileName = 'Thermal.csv'
         break;
         case 'border':
+
+            console.log(borderPoints)
 
             if (borderPoints.length == 0)
                 return;
@@ -637,7 +647,7 @@ function saveAsCSV(option) {
                 }
             }
 
-            fileName = 'Border.csv'
+            fileName = 'Border.bon'
         break;
         default:
             return
