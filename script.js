@@ -160,6 +160,7 @@ function undo(){
     if(history.length == 0)
         return
 
+    console.log(circleMarker)
 
     for(var i = 0; i < circleMarker.length; i++){
         circleMarker[i].remove(map)
@@ -170,7 +171,6 @@ function undo(){
 
     borderPoints = step.borderPoints.slice()
     borderHoles =  step.borderHoles.slice()
-    circleMarker =  step.circleMarker.slice()
     holeIndex =  step.holeIndex
     thermals = step.thermals.slice()
     isPolyToolActive = step.isPolyToolActive
@@ -181,6 +181,8 @@ function undo(){
 
     circleMarker = []
 
+    console.log(circleMarker)
+
     // Draw thermals
     for(var i = 0; i < thermals.length; i++){
         let t = thermals[i]
@@ -190,6 +192,8 @@ function undo(){
 }
 
 function addHistory(){
+    console.log('Add History')
+    console.log(thermals)
 
     let oldBorderHoles = []
 
@@ -199,9 +203,8 @@ function addHistory(){
     let step = {
         'borderPoints': borderPoints.slice(),
         'borderHoles': oldBorderHoles,
-        'circleMarker': circleMarker.slice(),
         'holeIndex': holeIndex,
-        'thermals': thermals.slice(),
+        'thermals': thermals,
         'isPolyToolActive': isPolyToolActive
     }
 
@@ -284,6 +287,7 @@ function addThermalToMap(id, latlng, height, diameter, speed){
             for(var i = 0; i < circleMarker.length; i++){
                 if(circleMarker[i].options.id == i){
                     circleMarker.splice(i, 1)
+                    thermals.splice(i, 1)
                     document.getElementById("pointCount").value = circleMarker.length
                     break
                 }
@@ -453,6 +457,9 @@ function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, m
 /* Generates thermals inside the border polygon and displays them on the map */
 function generateThermals(){
 
+    if(borderPoints.length < 3)
+        return
+
     addHistory()
 
     for(var i = 0; i < circleMarker.length; i++){
@@ -460,9 +467,9 @@ function generateThermals(){
     }
 
     circleMarker = []
+    thermals = []
 
-    if(borderPoints.length < 3)
-        return
+    console.log(circleMarker.length)
 
     let minLat = 200
     let minLng = 200
