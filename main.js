@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen } = require('electron')
+const { app, BrowserWindow, screen, Menu } = require('electron')
 const path = require('path')
 
 const createWindow = () => {
@@ -6,6 +6,34 @@ const createWindow = () => {
     const screenElectron = screen;
     const display = screenElectron.getPrimaryDisplay();
     const dimensions = display.workAreaSize;
+
+    const mainMenuTemplate = [
+        {
+            role: 'help',
+            submenu: [
+              {
+                label: 'Manual',
+                click: async () => {
+                  const { shell } = require('electron')
+                  await shell.openExternal('https://www.flyyourselfvrsim.uk/content/thermals/anleitung/')
+                }
+              },
+              {
+                label: 'Learn More',
+                click: async () => {
+                  const { shell } = require('electron')
+                  await shell.openExternal('https://www.flyyourselfvrsim.uk/content/links/')
+                }
+              }
+            ]
+        }
+    ]
+
+
+    
+    const mainMenu = Menu.buildFromTemplate(mainMenuTemplate)
+
+    Menu.setApplicationMenu(mainMenu)
 
     const mainWindow = new BrowserWindow({
         width: parseInt(dimensions.width * 0.8),
