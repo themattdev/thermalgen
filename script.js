@@ -160,8 +160,6 @@ function undo(){
     if(history.length == 0)
         return
 
-    console.log(circleMarker)
-
     for(var i = 0; i < circleMarker.length; i++){
         circleMarker[i].remove(map)
     }
@@ -181,8 +179,6 @@ function undo(){
 
     circleMarker = []
 
-    console.log(circleMarker)
-
     // Draw thermals
     for(var i = 0; i < thermals.length; i++){
         let t = thermals[i]
@@ -192,8 +188,6 @@ function undo(){
 }
 
 function addHistory(){
-    console.log('Add History')
-    console.log(thermals)
 
     let oldBorderHoles = []
 
@@ -284,10 +278,12 @@ function addThermalToMap(id, latlng, height, diameter, speed){
     // On click handler for deleting thermals
     circle.on("click", function(e){
         if(mode == 3){
+            console.log('Delete' + circleMarker.length)
             for(var i = 0; i < circleMarker.length; i++){
-                if(circleMarker[i].options.id == i){
+                if(circleMarker[i].options.id == id){
                     circleMarker.splice(i, 1)
                     thermals.splice(i, 1)
+                    console.log(thermals.length)
                     document.getElementById("pointCount").value = circleMarker.length
                     break
                 }
@@ -469,8 +465,6 @@ function generateThermals(){
     circleMarker = []
     thermals = []
 
-    console.log(circleMarker.length)
-
     let minLat = 200
     let minLng = 200
     let maxLat = -200 
@@ -623,8 +617,6 @@ function saveAsCSV(option) {
             fileName = 'Thermal.csv'
         break;
         case 'border':
-
-            console.log(borderPoints)
 
             if (borderPoints.length == 0)
                 return;
