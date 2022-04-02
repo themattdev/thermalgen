@@ -41,7 +41,8 @@ const createWindow = () => {
         minWidth: parseInt(dimensions.width * 0.8),
         minHeight: parseInt(dimensions.height * 0.8),
         maxWidth: dimensions.width,
-        maxHeight: dimensions.height
+        maxHeight: dimensions.height,
+        icon: __dirname + '/build/icon.ico'
         /*
         webPreferences: {
             preload: path.join(__dirname, 'preload.js')

@@ -4,7 +4,9 @@
   "description": "Thermalgen",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "app:dir": "electron-builder --dir",
+    "app:dist": "electron-builder"
   },
   "repository": {
     "type": "git",
@@ -17,6 +19,15 @@
   },
   "homepage": "https://github.com/themattdev/thermalgen#readme",
   "devDependencies": {
-    "electron": "^18.0.0"
-  }
+    "electron": "^18.0.0",
+    "electron-builder": "^22.14.13"
+  },
+  "build": {
+    "appId": "thermalgen",    
+    "win": {
+        "publisherName": "flyyourselfvrsim.uk",
+        "target": "nsis",
+        "icon": "icon.ico"
+    }
+ }
 }
