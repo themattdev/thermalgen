@@ -2,7 +2,7 @@
   "name": "thermalgen",
   "version": "2.2.1",
   "description": "Thermalgen",
-  "main": "main.js",
+  "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
     "app:dir": "electron-builder --dir",
@@ -27,7 +27,7 @@
     "win": {
         "publisherName": "flyyourselfvrsim.uk",
         "target": "nsis",
-        "icon": "icon.ico"
+        "icon": "images/icon.ico"
     }
  }
 }

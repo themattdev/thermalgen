@@ -73,7 +73,7 @@ h2 {
     width: 20px;
     height: 20px;
     background-size: 20px;
-    background-image: url('images/cross.svg');
+    background-image: url('../images/cross.svg');
     cursor: pointer;
 }
 
@@ -134,35 +134,35 @@ h2 {
 }
 
 .broom{
-    background-image: url('images/broom.svg');
+    background-image: url('../images/broom.svg');
 }
 
 .marker{
-    background-image: url('images/marker.svg');
+    background-image: url('../images/marker.svg');
 }
 
 .pencil{
-    background-image: url('images/pencil.svg');
+    background-image: url('../images/pencil.svg');
 }
 
 .move{
-    background-image: url('images/arrows.svg');
+    background-image: url('../images/arrows.svg');
 }
 
 .upload{
-    background-image: url('images/upload.svg');
+    background-image: url('../images/upload.svg');
 }
 
 .disk{
-    background-image: url('images/disk.svg');
+    background-image: url('../images/disk.svg');
 }
 
 .scissors{
-    background-image: url('images/scissors.svg');
+    background-image: url('../images/scissors.svg');
 }
 
 .undo{
-    background-image: url('images/undo.svg');
+    background-image: url('../images/undo.svg');
 }
 
 .dialogButtons{

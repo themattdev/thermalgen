@@ -12,14 +12,14 @@ const createWindow = () => {
             role: 'help',
             submenu: [
               {
-                label: 'Manual',
+                label: 'Online Help',
                 click: async () => {
                   const { shell } = require('electron')
                   await shell.openExternal('https://www.flyyourselfvrsim.uk/content/thermals/anleitung/')
                 }
               },
               {
-                label: 'Learn More',
+                label: 'Linkpage',
                 click: async () => {
                   const { shell } = require('electron')
                   await shell.openExternal('https://www.flyyourselfvrsim.uk/content/links/')
@@ -42,7 +42,7 @@ const createWindow = () => {
         minHeight: parseInt(dimensions.height * 0.8),
         maxWidth: dimensions.width,
         maxHeight: dimensions.height,
-        icon: __dirname + '/build/icon.ico'
+        icon: __dirname + '/icon.ico'
         /*
         webPreferences: {
             preload: path.join(__dirname, 'preload.js')

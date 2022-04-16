@@ -1,127 +1,129 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-	<title>Thermal gernerator for Kintic</title>
-	<meta charset="UTF-8">
-    <meta name="author" content="Matthias Hesse">
-    <meta name="description" content="Thermal gernerator for Kintic">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		
-	<!-- Leaflet CSS -->
-	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-		integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-		crossorigin="" />
+    <head>
+        <title>Thermal Generator for Kintic</title>
+        <meta charset="UTF-8">
+        <meta name="author" content="Matthias Hesse">
+        <meta name="description" content="Thermal Generator for Kintic">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" type="image/x-icon" href="images/icon.ico">
+            
+        <!-- Leaflet CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+            integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+            crossorigin="" />
 
-	<!-- Leaflet JS -->
-	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-		integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-		crossorigin=""></script>
-		
-	<!-- Custom Styles -->
-	<link rel="stylesheet" type="text/css" href="style.css">
-</head>
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+            
+        <!-- Custom Styles -->
+        <link rel="stylesheet" type="text/css" href="styles/style.css">
+    </head>
 
-<body>
-    <div class="content">
+    <body>
+        <div class="content">
 
-        <div id="map"> </div>
-	
-        <div class="inputWrapper">
-            <div class="version" onclick="showChangelog(true)">v 2.2.1</div>
+            <div id="map"> </div>
+        
+            <div class="inputWrapper">
+                <div class="version" onclick="setElementHiddenState('changeLog', false)">v 2.2.2</div>
 
-            <div class="controls">
-                <div id="moveMode" class="controlBtn move active" onclick="setMode(0)"></div>
-                <div id="polyMode" class="controlBtn pencil" onclick="setMode(1)"></div>
-                <div id="holeMode" class="controlBtn scissors" onclick="setMode(4)"></div>
-                <div id="undoBtn" class="controlBtn undo" onclick="undo()"></div>
+                <div class="controls">
+                    <div id="moveMode" class="controlBtn move active" onclick="setMode(0)"></div>
+                    <div id="polyMode" class="controlBtn pencil" onclick="setMode(1)"></div>
+                    <div id="holeMode" class="controlBtn scissors" onclick="setMode(4)"></div>
+                    <div id="undoBtn" class="controlBtn undo" onclick="undo()"></div>
+                    
+                </div>
+                
+                <div class="controls">
+                    <div id="addMode" class="controlBtn marker" onclick="setMode(2)"></div>
+                    <div id="deleteMode" class="controlBtn broom" onclick="setMode(3)"></div>
+                    <div id="deleteMode" class="controlBtn disk" onclick="saveAsCSV('border')"></div>
+                    <input type="file" id="upload" onChange="loadBoarder(this)" accept=".bon">
+                    <label for="upload" class="controlBtn upload"></label>
+                </div>
+
+                <label for="count">Count</label><input type="number" id="count" value="50"> 
+                <label for="heightMin">Height Min (m)</label><input type="number" id="heightMin" value="8000"> 
+                <label for="heightMax">Height Max (m)</label><input type="number" id="heightMax" value="9000">
+
+                <label for="diameterMin">Diameter Min (nm)</label><input type="number" id="diameterMin" value="0.3">
+                <label for="diameterMax">Diameter Max (nm)</label><input type="number" id="diameterMax" value="0.5">
+
+                <label for="speedMin">Speed Min (kn)</label><input type="number" id="speedMin" value="4">
+                <label for="speedMax">Speed Max (kn)</label><input type="number" id="speedMax" value="7">
+
+                <input type="button" class="button" value="Generate" onclick="generateThermals()">
+                <input type="button" class="button" value="Reset" onclick="setElementHiddenState('resetDialog', false)">
+                <input id="downBtn" type="button" class="button" value="Save CSV" onclick="saveAsCSV('thermals')">
+            
+                <label for="pointCount">Generated thermals</label><input type="number" id="pointCount" value="0" disabled>
                 
             </div>
-            <div class="controls">
-                <div id="addMode" class="controlBtn marker" onclick="setMode(2)"></div>
-                <div id="deleteMode" class="controlBtn broom" onclick="setMode(3)"></div>
-                <div id="deleteMode" class="controlBtn disk" onclick="saveAsCSV('border')"></div>
-                <input type="file" id="upload" onChange="loadBoarder(this)" accept=".bon">
-                <label for="upload" class="controlBtn upload"></label>
+
+            <div id="changeLog" class="overlayWrapper full hidden"> 
+                <div class="wrapperContent">
+                    <div class="closeButton" onclick="setElementHiddenState('changeLog', true)"></div>
+                    <h1>Changelog</h1>
+                    <h2>v 2.2.2 16.04.2022</h2>
+                    <p>Scaled display of thermals to match kinetic assistant</p>
+                    <h2>v 2.2.1 02.04.2022</h2>
+                    <p>Fixed a bug where generated thermals would still be visible after using undo</p>
+                    <p>Fixed a bug where manually added thermals would still be in the csv after manually deleting them</p>
+                    <h2>v 2.2.0 01.04.2022</h2>
+                    <p>Added confirmation dialogue for resetting</p>
+                    <p>Changed color for boundary holes</p>
+                    <p>Fixed a bug that froze the application when generating thermals after loading a boundary</p>
+                    <p>Optimzed the ui</p>
+                    <h2>v 2.1.0 31.03.2022</h2>
+                    <p>Added tools for saving and loading boundary</p>
+                    <p>Added tool for creating boundary holes</p>
+                    <p>Added tool for undo last action</p>
+                    <h2>v 2.0.0 25.02.2022</h2>
+                    <p>Added tool for manually adding thermals</p>
+                    <p>Added tool for deleting thermals</p>
+                    <p>Optimized generation of thermals</p>
+                    <h2>v 1.0.1 21.02.2022</h2>
+                    <p>Removed overlapping thermals</p>
+                    <p>Changed parameter count to iterations</p>
+                    <p>Added counter for generated thermals</p>
+                    <h2>v 1.0.0 15.02.2022</h2>
+                    <p>Initial Release</p>
+                </div>  
             </div>
 
-            <label for="count">Count</label><input type="number" id="count" value="50"> 
-            <label for="heightMin">Height Min (m)</label><input type="number" id="heightMin" value="8000"> 
-            <label for="heightMax">Height Max (m)</label><input type="number" id="heightMax" value="9000">
-
-            <label for="diameterMin">Diameter Min (nm)</label><input type="number" id="diameterMin" value="0.3">
-            <label for="diameterMax">Diameter Max (nm)</label><input type="number" id="diameterMax" value="0.5">
-
-            <label for="speedMin">Speed Min (kn)</label><input type="number" id="speedMin" value="4">
-            <label for="speedMax">Speed Max (kn)</label><input type="number" id="speedMax" value="7">
-
-            <input type="button" class="button" value="Generate" onclick="generateThermals()">
-            <input type="button" class="button" value="Reset" onclick="confirmReset()">
-            <input id="downBtn" type="button" class="button" value="Save CSV" onclick="saveAsCSV('thermals')">
-           
-            <label for="pointCount">Generated thermals</label><input type="number" id="pointCount" value="0" disabled>
-            
-        </div>
-
-        <div id="changeLog" class="overlayWrapper full hidden">
-                
-            <div class="wrapperContent">
-                <div class="closeButton" onclick="showChangelog(false)"></div>
-                <h1>Changelog</h1>
-                <h2>v 2.2.1 2.04.2022</h2>
-                <p>Fixed a bug where generated thermals would still be visible after using undo</p>
-                <p>Fixed a bug where manually added thermals would still be in the csv after manually deleting them</p>
-                <h2>v 2.2.0 1.04.2022</h2>
-                <p>Added confirmation dialogue for resetting</p>
-                <p>Changed color for boundary holes</p>
-                <p>Fixed a bug that froze the application when generating thermals after loading a boundary</p>
-                <p>Optimzed the ui</p>
-                <h2>v 2.1.0 31.03.2022</h2>
-                <p>Added tools for saving and loading boundary</p>
-                <p>Added tool for creating boundary holes</p>
-                <p>Added tool for undo last action</p>
-                <h2>v 2.0.0 25.02.2022</h2>
-                <p>Added tool for manually adding thermals</p>
-                <p>Added tool for deleting thermals</p>
-                <p>Optimized generation of thermals</p>
-                <h2>v 1.0.1 21.02.2022</h2>
-                <p>Removed overlapping thermals</p>
-                <p>Changed parameter count to iterations</p>
-                <p>Added counter for generated thermals</p>
-                <h2>v 1.0.0 15.02.2022</h2>
-                <p>Initial Release</p>
-            </div>
-            
-        </div>
-
-        <div id="addDialog" class="overlayWrapper hidden">
-            <div class="wrapperContent gap flex">
-                <label for="lat">Lat</label><input type="number" id="lat" value="" disabled> 
-                <label for="lng">Lng</label><input type="number" id="lng" value="" disabled> 
-                <label for="height">Height (m)</label><input type="number" id="height" value="8000"> 
-                <label for="diameter">Diameter (nm)</label><input type="number" id="diameter" value="0.3">
-                <label for="speed">Speed (kn)</label><input type="number" id="speed" value="4">
-                <div class="dialogButtons">
-                    <input type="button" class="button" value="Add" onclick="addThermal()">
-                    <input type="button" class="button" value="Cancel" onclick="cancelDialog('addDialog')">
+            <div id="addDialog" class="overlayWrapper hidden">
+                <div class="wrapperContent gap flex">
+                    <label for="lat">Lat</label><input type="number" id="lat" value="" disabled> 
+                    <label for="lng">Lng</label><input type="number" id="lng" value="" disabled> 
+                    <label for="height">Height (m)</label><input type="number" id="height" value="8000"> 
+                    <label for="diameter">Diameter (nm)</label><input type="number" id="diameter" value="0.3">
+                    <label for="speed">Speed (kn)</label><input type="number" id="speed" value="4">
+                    <div class="dialogButtons">
+                        <input type="button" class="button" value="Add" onclick="addThermal()">
+                        <input type="button" class="button" value="Cancel" onclick="setElementHiddenState('addDialog', true)">
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="resetDialog" class="overlayWrapper hidden">
-            <div class="wrapperContent gap flex">
-                <h2>Are you sure you want to reset the application?</h2>
-                <h2>All unsaved progress will be lost!</h2>
-                <div class="dialogButtons">
-                    <input type="button" class="button" value="Yes" onclick="reset()">
-                    <input type="button" class="button" value="No" onclick="cancelDialog('resetDialog')">
+            <div id="resetDialog" class="overlayWrapper hidden">
+                <div class="wrapperContent gap flex">
+                    <h2>Are you sure you want to reset the application?</h2>
+                    <h2>All unsaved progress will be lost!</h2>
+                    <div class="dialogButtons">
+                        <input type="button" class="button" value="Yes" onclick="reset()">
+                        <input type="button" class="button" value="No" onclick="setElementHiddenState('resetDialog', true)">
+                    </div>
                 </div>
             </div>
-        </div>
 
-    </div>
-    
-	<script type="text/javascript" src="script.js"></script>
-</body>
+        </div>
+        
+        <script type="text/javascript" src="scripts/thermalgen.js"></script>
+    </body>
 
 </html>

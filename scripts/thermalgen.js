@@ -11,7 +11,7 @@ let newLatLng
 let history = []
 let isPolyToolActive = true
 
-/* Util Methods */
+const thermalScale = 2.1
 
 /* Calculates random value between min and max (max not included) */
 function rnd(min, max) {
@@ -30,23 +30,25 @@ function round(num, places) {
     (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html) */
 function angle2D(x1, y1, x2, y2)
 {
-   let dtheta,theta1,theta2
+    let dtheta,theta1,theta2
 
-   theta1 = Math.atan2(y1,x1)
-   theta2 = Math.atan2(y2,x2)
-   dtheta = theta2 - theta1
+    theta1 = Math.atan2(y1,x1)
+    theta2 = Math.atan2(y2,x2)
+    dtheta = theta2 - theta1
 
-   while (dtheta > Math.PI)
-      dtheta -= (2* Math.PI)
-   while (dtheta < - Math.PI)
-      dtheta += (2* Math.PI)
+    while (dtheta > Math.PI)
+        dtheta -= (2* Math.PI)
+    while (dtheta < - Math.PI)
+        dtheta += (2* Math.PI)
 
-   return(dtheta)
+    return(dtheta)
 }
 
-/*  Checks if a given point p lies inside the polygon poly
-    (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html) */
-function insidePolygon(poly, p)
+/*  Checks if a given point lies inside a polygone                                                      */
+/*  (Rewritten in js from https://www.eecs.umich.edu/courses/eecs380/HANDOUTS/PROJ2/InsidePoly.html)    */
+/* poly: Polygon                                                                                        */
+/* p: Point                                                                                             */
+function isInsidePolygon(poly, p)
 {
     let angle = 0;
     let p1 = {"lat": 0, "lng": 0}
@@ -70,42 +72,49 @@ function insidePolygon(poly, p)
         return true
 }
 
-/* Converts degree to radian */
+/* Converts degree to radian    */
+/* deg: degree                  */
 function deg2rad(deg) {
     return deg * (Math.PI/180)
 }
 
-/* Calculates distance between two given latlng coordinates in nm */
+/* Calculates distance between two given latlng coordinates in nautic miles */
+/* lat1: latitude of point A                                                */
+/* lng: longitude of point A                                                */
+/* lat2: latitude of point B                                                */
+/* lng2: longitude of point B                                               */
 function distance(lat1, lng1, lat2, lng2) {
-    var radiusEarth = 6371 
 
-    var dLat = deg2rad(lat2 - lat1)
-    var dLon = deg2rad(lng2 - lng1)
-    var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2)
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-    var dist = radiusEarth * c * 0.5399568
+    let radiusEarth = 6371 
+
+    let dLat = deg2rad(lat2 - lat1)
+    let dLon = deg2rad(lng2 - lng1)
+
+    let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2)
+
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+
+    let dist = radiusEarth * c * 0.5399568
 
     return dist
 }
 
+/* Checks if two given points are overlapping   */
+/* p1: Point 1                                  */
+/* p2: Point 2                                  */
 function isOverlapping(p1, p2){
 
     // Calculate distance and convert from km to nm
     let dist = distance(p1.latlng.lat,p1.latlng.lng,p2.latlng.lat,p2.latlng.lng) 
 
-    if(dist < (p1.diameter) || dist < (p2.diameter))
+    if(dist < (p1.diameter * thermalScale) || dist < (p2.diameter * thermalScale))
         return true
 
     return false
 }
- 
-/* Control Methods */
 
-/*  Update the current control mode
-    0 = Move, 1 = Poly, 2 = Add, 3 = Delete */
-function setMode(newMode){
-
-    mode = newMode
+/* Updates the active state of all ui control elements */
+function updateUIControls(){
 
     document.getElementById("moveMode").classList.remove("active");
     document.getElementById("polyMode").classList.remove("active");
@@ -128,41 +137,79 @@ function setMode(newMode){
             break;
         case 4:
             document.getElementById("holeMode").classList.add("active");
-            holeIndex += 1
-            borderHoles.push([])
             break;
 
     }
 
 }
 
-function disablePolyTool(state){
-    if(state == true)
-    {
-        document.getElementById("polyMode").classList.add("hidden")
-        document.getElementById("holeMode").classList.add("hidden")
-        isPolyToolActive = false
-    }
-    else
-    {
-        document.getElementById("polyMode").classList.remove("hidden")
-        document.getElementById("holeMode").classList.remove("hidden")
-        isPolyToolActive = true
-    }
-    
+/* Set the hidden state of a given dom element                          */
+/* id: html id of the element                                           */
+/* hide: true => element will be hidden, false => element will be shown */
+function setElementHiddenState(id, hide){
 
-    if(state == true && mode == 1)
+    if(hide == true)
+        document.getElementById(id).classList.add("hidden")
+    else
+        document.getElementById(id).classList.remove("hidden")
+}
+
+/* Shows the dialog for manually adding a thermal location  */
+/* e: Mouse event of map on click event                     */
+function showAddDialog(e){
+
+    document.getElementById("addDialog").classList.remove("hidden")
+
+    document.getElementById("lat").value = e.latlng.lat.toFixed(5)
+    document.getElementById("lng").value = e.latlng.lng.toFixed(5)
+
+    newLatLng = e.latlng
+}
+
+/* Updates the current control mode                             */
+/* newMode:   0 = Move, 1 = Poly, 2 = Add, 3 = Delete, 4 = Cut  */
+function setMode(newMode){
+
+    mode = newMode
+
+    if(mode == 4){
+        holeIndex += 1
+            borderHoles.push([])
+    }
+
+    updateUIControls()
+
+}
+
+/* Sets the state of the poly tool */
+/* state: true = activate, false = disable */
+function setPolyToolState(state){
+
+    setElementHiddenState("polyMode", !state)
+    setElementHiddenState("holeMode", !state)
+
+    isPolyToolActive = state
+
+    if(state == false && mode == 1)
         setMode(0)
 }
 
+/* Clears all map markers */
+function clearMarkers(){
+
+    for(var i = 0; i < circleMarker.length; i++){
+        circleMarker[i].remove(map)
+    }
+
+}
+
+/* Reverts all global values to the last step in the history */
 function undo(){
 
     if(history.length == 0)
         return
 
-    for(var i = 0; i < circleMarker.length; i++){
-        circleMarker[i].remove(map)
-    }
+    clearMarkers()
 
     // Load values
     let step = history.pop()
@@ -173,7 +220,7 @@ function undo(){
     thermals = step.thermals.slice()
     isPolyToolActive = step.isPolyToolActive
 
-    disablePolyTool(!isPolyToolActive)
+    setPolyToolState(isPolyToolActive)
 
     drawBorder()
 
@@ -187,6 +234,7 @@ function undo(){
 
 }
 
+/* Adds a new step to the history */
 function addHistory(){
 
     let oldBorderHoles = []
@@ -215,7 +263,6 @@ function onMapClick(e) {
             borderPoints.push(e.latlng)
 
             drawBorder()
-
         break
         case 2:
             showAddDialog(e)
@@ -226,22 +273,12 @@ function onMapClick(e) {
             borderHoles[holeIndex].push(e.latlng)
 
             drawBorder()
-
         break
     }
     
 }
 
-function showAddDialog(e){
-
-    document.getElementById("addDialog").classList.remove("hidden")
-
-    document.getElementById("lat").value = e.latlng.lat.toFixed(5)
-    document.getElementById("lng").value = e.latlng.lng.toFixed(5)
-
-    newLatLng = e.latlng
-}
-
+/* Draws the border polygon and border holes */
 function drawBorder(){
 
     if(polygon)
@@ -261,6 +298,12 @@ function drawBorder(){
     ], {color:'green'}).addTo(map)
 }
 
+/* Adds a thermal to the map and registers needed listener  */
+/* id: thermal id                                           */
+/* latlng: latlng coordinates                               */
+/* height: height of the thermal                            */
+/* diameter: diameter of the thermal                        */
+/* speed: speed of the thermal                              */
 function addThermalToMap(id, latlng, height, diameter, speed){
 
     // Create circle with a popup
@@ -268,7 +311,7 @@ function addThermalToMap(id, latlng, height, diameter, speed){
         color: 'red',
         fillColor: '#f03',
         fillOpacity: 0.5,
-        radius: diameter * 0.5 * 1852,
+        radius: diameter * 0.5 * 1852 * thermalScale,
         id: id,
         "height": height,
         "diameter": diameter,
@@ -319,7 +362,7 @@ function addThermalToMap(id, latlng, height, diameter, speed){
 
 }
 
-/* Called by ui to add a single thermal */
+/* Adds a single thermal defined by ui parameters */
 function addThermal(){
 
     addHistory()
@@ -348,27 +391,13 @@ function addThermal(){
     lastID++
 }
 
-/* Cancel the add thermal dialog */
-function cancelDialog(id){
-
-    document.getElementById(id).classList.add("hidden")
-    
-}
-
-function confirmReset(){
-
-    document.getElementById("resetDialog").classList.remove("hidden")
-}
-
 /* Clears all thermals and removes the border polygon */
 function reset(){
 
-    document.getElementById("resetDialog").classList.add("hidden")
+    setElementHiddenState('resetDialog', true)
 
     // Remove thermals
-    for(var i = 0; i < circleMarker.length; i++){
-        circleMarker[i].remove(map)
-    }
+    clearMarkers()
 
     circleMarker = []
     borderPoints = []
@@ -385,13 +414,25 @@ function reset(){
 
     document.getElementById("pointCount").value = 0
 
-    disablePolyTool(false)
+    setPolyToolState(true)
 
     setMode(0)
 
 }
 
-/* Generate geo positions in a given range for lat and lng */
+/* Generate geo positions in a given range for lat and lng  */
+/* count: Number of geo positions to generate               */
+/* minLat: Minimal latitude                                 */
+/* maxLat: Maximal latitude                                 */
+/* minLng: Minimal longitude                                */
+/* maxLng: Maximal longitude                                */
+/* minDiamter: Minimal diameter                             */
+/* maxDiameter: Maximal diameter                            */
+/*                                                          */
+/* Note: Geopositions must not be overlapping. Depending    */
+/*       on the lat, lng and diameter settings it might     */
+/*       not be possible to generate all positions defined  */
+/*       by count                                           */
 function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, maxDiameter){
 
     let positions = []
@@ -412,7 +453,7 @@ function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, m
         let diameter = rnd(minDiameter, maxDiameter).toFixed(1)
 
         // Skip point if it was not generated inside the border polygon
-        if(!insidePolygon(borderPoints, latlng))
+        if(!isInsidePolygon(borderPoints, latlng))
         {   
             iterationCount++
             continue GenerationLoop
@@ -420,7 +461,7 @@ function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, m
 
         // Skip point if it was generated inside a hole polygon
         for(i = 0; i < borderHoles.length; i++){
-            if(insidePolygon(borderHoles[i], latlng))
+            if(isInsidePolygon(borderHoles[i], latlng))
                 continue GenerationLoop
         }
             
@@ -450,7 +491,7 @@ function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, m
 
 }
 
-/* Generates thermals inside the border polygon and displays them on the map */
+/* Generates thermals inside the border polygon and outside the border holes and displays them on the map */
 function generateThermals(){
 
     if(borderPoints.length < 3)
@@ -458,9 +499,7 @@ function generateThermals(){
 
     addHistory()
 
-    for(var i = 0; i < circleMarker.length; i++){
-        circleMarker[i].remove(map)
-    }
+    clearMarkers()
 
     circleMarker = []
     thermals = []
@@ -527,10 +566,11 @@ function generateThermals(){
         
     }
 
-    disablePolyTool(true)
+    setPolyToolState(false)
     
 }
 
+/* Loads border and border hole data from a given file */
 function loadBoarder(file){
 
     if(!file)
@@ -547,12 +587,10 @@ function loadBoarder(file){
 
             let lbreak = dataFile.split("\n")
 
+            // Empty global arrays
             borderPoints = []
-
             borderHoles = []
-
             hole = []
-
             borderComplete = false;
 
             for(var i = 0; i < lbreak.length; i++){
@@ -565,9 +603,9 @@ function loadBoarder(file){
 
                 // Create new hole
                 if(line.startsWith('hole')){
-                    if(borderComplete == true){
+                    if(borderComplete == true)
                         borderHoles.push(hole)
-                    }
+                    
                     borderComplete = true;
                     holeIndex += 1
                     hole = []
@@ -577,12 +615,10 @@ function loadBoarder(file){
                 let p = {'lat': parseFloat(line.split(",")[0]), 'lng': parseFloat(line.split(",")[1])}
 
                  // Add points to border
-                if(borderComplete == false){
+                if(borderComplete == false)
                     borderPoints.push(p)
-                }
-                else{
+                else
                     hole.push(p)
-                }
             }
 
             if(hole.length > 0)
@@ -593,10 +629,12 @@ function loadBoarder(file){
         }
     }
 
+    // Reset value of file element otherwise the same file cant be uploaded twice
     document.getElementById('upload').value = ''
 }
 
-/* Convert all circle markers into csv data and auto download it */
+/* Convert thermal order border data and auto downloads it */
+/* option = thermals or border                             */
 function saveAsCSV(option) {
  
     var csv_data = []
@@ -606,6 +644,7 @@ function saveAsCSV(option) {
     switch(option){
     
         case 'thermals':
+            // Convert all thermals
             for (var i = 0; i < circleMarker.length; i++) {
         
                 let circle = circleMarker[i]
@@ -622,7 +661,8 @@ function saveAsCSV(option) {
                 return;
 
             csv_data.push('border')
-
+            
+            // Convert border polygon
             for (var i = 0; i < borderPoints.length; i++) {
         
                 let borderPoint = borderPoints[i]
@@ -631,7 +671,8 @@ function saveAsCSV(option) {
         
                 csv_data.push(row)
             }
-        
+            
+            // Convert border holes
             for(var i = 0; i < borderHoles.length; i++){
                 csv_data.push('hole_' + i)
 
@@ -680,17 +721,6 @@ function downloadCSVFile(csv_data, filename) {
     document.body.removeChild(tmpLink);
 }
 
-function showChangelog(state){
-
-    if(state == true)
-    {
-        document.getElementById('changeLog').classList.remove('hidden')
-        return
-    }
-        
-    document.getElementById('changeLog').classList.add('hidden');
-}
-
 // Initialize map
 let map = L.map("map").setView([56.08385, -4.53681], 13)
 
@@ -703,5 +733,6 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   zoomOffset: -1,
 }).addTo(map)
 
+// Register on click handler
 map.on('click', onMapClick)
   
