@@ -570,71 +570,139 @@ function generateThermals(){
     
 }
 
-/* Loads border and border hole data from a given file */
-function loadBoarder(file){
 
-    if(!file)
+function load(fileList){
+
+    if(!fileList)
         return
 
-    addHistory()
+    if (fileList.files && fileList.files[0]) {
 
-    if (file.files && file.files[0]) {
-        let reader = new FileReader();
-        reader.readAsBinaryString(file.files[0]);
-        reader.onload = function (e) {
-            
-            let dataFile = e.target.result
+        let file = fileList.files[0]
 
-            let lbreak = dataFile.split("\n")
+        let fileExtention = file.name.split('.')[1].toLowerCase()
 
-            // Empty global arrays
-            borderPoints = []
-            borderHoles = []
-            hole = []
-            borderComplete = false;
+        if(fileExtention === "bon")
+            loadBorder(file)
+        else if(fileExtention === "csv")
+            loadThermals(file)
 
-            for(var i = 0; i < lbreak.length; i++){
-
-                let line = lbreak[i]
-
-                // Skip first header
-                if(line.startsWith('border'))
-                    continue
-
-                // Create new hole
-                if(line.startsWith('hole')){
-                    if(borderComplete == true)
-                        borderHoles.push(hole)
-                    
-                    borderComplete = true;
-                    holeIndex += 1
-                    hole = []
-                    continue
-                }
-
-                let p = {'lat': parseFloat(line.split(",")[0]), 'lng': parseFloat(line.split(",")[1])}
-
-                 // Add points to border
-                if(borderComplete == false)
-                    borderPoints.push(p)
-                else
-                    hole.push(p)
-            }
-
-            if(hole.length > 0)
-                borderHoles.push(hole)
-
-            drawBorder()
-                    
-        }
     }
 
     // Reset value of file element otherwise the same file cant be uploaded twice
     document.getElementById('upload').value = ''
+
 }
 
-/* Convert thermal order border data and auto downloads it */
-/* option = thermals or border                             */
+/* Loads border and border hole data from a given file */
+function loadBorder(file){
+
+    
+        let reader = new FileReader();
+        reader.readAsBinaryString(file);
+        reader.onload = function (e) {
+            
+        let dataFile = e.target.result
+
+        let lbreak = dataFile.split("\n")
+
+        addHistory()
+
+        // Empty global arrays
+        borderPoints = []
+        borderHoles = []
+        hole = []
+        borderComplete = false;
+
+        for(var i = 0; i < lbreak.length; i++){
+
+            let line = lbreak[i]
+
+            // Skip first header
+            if(line.startsWith('border'))
+                continue
+
+            // Create new hole
+            if(line.startsWith('hole')){
+                if(borderComplete == true)
+                    borderHoles.push(hole)
+                
+                borderComplete = true;
+                holeIndex += 1
+                hole = []
+                continue
+            }
+
+            let p = {'lat': parseFloat(line.split(",")[0]), 'lng': parseFloat(line.split(",")[1])}
+
+                // Add points to border
+            if(borderComplete == false)
+                borderPoints.push(p)
+            else
+                hole.push(p)
+        }
+
+        if(hole.length > 0)
+            borderHoles.push(hole)
+
+        drawBorder()
+                    
+        
+    }
+
+}
+
+/* Loads thermal data from a given file */
+function loadThermals(file){
+
+    let reader = new FileReader();
+    reader.readAsBinaryString(file);
+    reader.onload = function (e) {
+        
+        let dataFile = e.target.result
+
+        let lbreak = dataFile.split("\n")
+
+        addHistory()
+
+        // Empty global arrays and clear markers
+        clearMarkers()
+
+        circleMarker = []
+        thermals = []
+        lastID = 0
+
+        for(var i = 0; i < lbreak.length; i++){
+
+            let line = lbreak[i].split(",")
+
+            let p = {'lat': parseFloat(line[3]), 'lng': parseFloat(line[4])}
+
+            let t = {
+                'id': lastID,
+                'latlng': p,
+                'height': line[5],
+                'diameter': line[7].split(" ")[0],
+                'speed': line[7].split(" ")[1]
+            }
+
+            console.log(t)
+        
+            thermals.push(t)
+        
+            addThermalToMap(t.id, t.latlng, t.height, t.diameter, t.speed)
+
+            lastID++;
+            
+
+        }
+                
+    }
+   
+}
+
+/* Convert thermal or border data and auto downloads it     */
+/* option = thermals or border                              */
 function saveAsCSV(option) {
  
     var csv_data = []

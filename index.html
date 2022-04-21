@@ -29,7 +29,7 @@
             <div id="map"> </div>
         
             <div class="inputWrapper">
-                <div class="version" onclick="setElementHiddenState('changeLog', false)">v 2.2.2</div>
+                <div class="version" onclick="setElementHiddenState('changeLog', false)">v 2.3.0</div>
 
                 <div class="controls">
                     <div id="moveMode" class="controlBtn move active" onclick="setMode(0)"></div>
@@ -43,13 +43,13 @@
                     <div id="addMode" class="controlBtn marker" onclick="setMode(2)"></div>
                     <div id="deleteMode" class="controlBtn broom" onclick="setMode(3)"></div>
                     <div id="deleteMode" class="controlBtn disk" onclick="saveAsCSV('border')"></div>
-                    <input type="file" id="upload" onChange="loadBoarder(this)" accept=".bon">
+                    <input type="file" id="upload" onChange="load(this)" accept=".bon, .csv">
                     <label for="upload" class="controlBtn upload"></label>
                 </div>
 
                 <label for="count">Count</label><input type="number" id="count" value="50"> 
-                <label for="heightMin">Height Min (m)</label><input type="number" id="heightMin" value="8000"> 
-                <label for="heightMax">Height Max (m)</label><input type="number" id="heightMax" value="9000">
+                <label for="heightMin">Height Min (m)</label><input type="number" id="heightMin" value="-500"> 
+                <label for="heightMax">Height Max (m)</label><input type="number" id="heightMax" value="500">
 
                 <label for="diameterMin">Diameter Min (nm)</label><input type="number" id="diameterMin" value="0.3">
                 <label for="diameterMax">Diameter Max (nm)</label><input type="number" id="diameterMax" value="0.5">
@@ -69,6 +69,8 @@
                 <div class="wrapperContent">
                     <div class="closeButton" onclick="setElementHiddenState('changeLog', true)"></div>
                     <h1>Changelog</h1>
+                    <h2>v 2.3.0 21.04.2022</h2>
+                    <p>Added option to load thermals</p>
                     <h2>v 2.2.2 16.04.2022</h2>
                     <p>Scaled display of thermals to match kinetic assistant</p>
                     <h2>v 2.2.1 02.04.2022</h2>
