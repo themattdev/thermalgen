@@ -3,6 +3,8 @@ let borderHoles = [] // List of all holes in the border polygon
 let holeIndex = -1
 let circleMarker = [] // List of thermals as circles
 let thermals = [] // List of thermals
+let manualCircleMarker = []
+let manualThermals = []
 let polygon // Polygon on the map for all border points
 let holePolygon
 let mode = 0 // Start in move mode
@@ -195,10 +197,17 @@ function setPolyToolState(state){
 }
 
 /* Clears all map markers */
-function clearMarkers(){
+function clearMarkers(removeManuals){
 
     for(var i = 0; i < circleMarker.length; i++){
         circleMarker[i].remove(map)
+    }
+
+    if(removeManuals == false)
+        return
+
+    for(var i = 0; i < manualCircleMarker.length; i++){
+        manualCircleMarker[i].remove(map)
     }
 
 }
@@ -209,7 +218,7 @@ function undo(){
     if(history.length == 0)
         return
 
-    clearMarkers()
+    clearMarkers(true)
 
     // Load values
     let step = history.pop()
@@ -218,6 +227,7 @@ function undo(){
     borderHoles =  step.borderHoles.slice()
     holeIndex =  step.holeIndex
     thermals = step.thermals.slice()
+    manualThermals = step.manualThermals.slice()
     isPolyToolActive = step.isPolyToolActive
 
     setPolyToolState(isPolyToolActive)
@@ -225,11 +235,17 @@ function undo(){
     drawBorder()
 
     circleMarker = []
+    manualCircleMarker = []
 
     // Draw thermals
     for(var i = 0; i < thermals.length; i++){
         let t = thermals[i]
-        addThermalToMap(t.id, t.latlng, t.height, t.diameter, t.speed)
+        addThermalToMap(t.id, t.latlng, t.height, t.diameter, t.speed, false)
+    }
+
+    for(var i = 0; i < manualThermals.length; i++){
+        let t = manualThermals[i]
+        addThermalToMap(t.id, t.latlng, t.height, t.diameter, t.speed, true)
     }
 
 }
@@ -246,7 +262,8 @@ function addHistory(){
         'borderPoints': borderPoints.slice(),
         'borderHoles': oldBorderHoles,
         'holeIndex': holeIndex,
-        'thermals': thermals,
+        'thermals': thermals.slice(),
+        'manualThermals': manualThermals.slice(),
         'isPolyToolActive': isPolyToolActive
     }
 
@@ -304,12 +321,19 @@ function drawBorder(){
 /* height: height of the thermal                            */
 /* diameter: diameter of the thermal                        */
 /* speed: speed of the thermal                              */
-function addThermalToMap(id, latlng, height, diameter, speed){
+function addThermalToMap(id, latlng, height, diameter, speed, manual){
 
+    let color;
+
+    if(manual == true)
+        color = 'green'
+    else
+        color = '#f03'
+    
     // Create circle with a popup
     let circle = L.circle([latlng.lat, latlng.lng], {
-        color: 'red',
-        fillColor: '#f03',
+        color: color,
+        fillColor: color,
         fillOpacity: 0.5,
         radius: diameter * 0.5 * 1852 * thermalScale,
         id: id,
@@ -321,13 +345,20 @@ function addThermalToMap(id, latlng, height, diameter, speed){
     // On click handler for deleting thermals
     circle.on("click", function(e){
         if(mode == 3){
-            console.log('Delete' + circleMarker.length)
+
             for(var i = 0; i < circleMarker.length; i++){
                 if(circleMarker[i].options.id == id){
                     circleMarker.splice(i, 1)
                     thermals.splice(i, 1)
-                    console.log(thermals.length)
                     document.getElementById("pointCount").value = circleMarker.length
+                    break
+                }
+            }
+
+            for(var i = 0; i < manualCircleMarker.length; i++){
+                if(manualCircleMarker[i].options.id == id){
+                    manualCircleMarker.splice(i, 1)
+                    manualThermals.splice(i, 1)
                     break
                 }
             }
@@ -356,7 +387,10 @@ function addThermalToMap(id, latlng, height, diameter, speed){
         map.dragging.enable();
     })
 
-    circleMarker.push(circle)
+    if(manual == true)
+        manualCircleMarker.push(circle)
+    else
+        circleMarker.push(circle)
 
     document.getElementById("pointCount").value = circleMarker.length
 
@@ -373,7 +407,7 @@ function addThermal(){
     let diameter = parseFloat(document.getElementById("diameter").value).toFixed(1)
     let speed = parseInt(document.getElementById("speed").value)
 
-    height = Math.round(height / 100) * 100
+    height = height
     speed = Math.round(speed)
 
     let t = {
@@ -384,9 +418,9 @@ function addThermal(){
         'speed': speed
     }
 
-    thermals.push(t)
+    manualThermals.push(t)
 
-    addThermalToMap(lastID, newLatLng, height, diameter, speed)
+    addThermalToMap(lastID, newLatLng, height, diameter, speed, true)
 
     lastID++
 }
@@ -397,9 +431,10 @@ function reset(){
     setElementHiddenState('resetDialog', true)
 
     // Remove thermals
-    clearMarkers()
+    clearMarkers(true)
 
     circleMarker = []
+    manualCircleMarker = []
     borderPoints = []
     borderHoles = []
     history = []
@@ -478,6 +513,17 @@ function generatePositions(count, minLat, maxLat, minLng, maxLng, minDiameter, m
             }
                 
         }
+
+        for(i = 0; i < manualThermals.length; i++){
+
+            // Remove points if they are overlapping and restart loop
+            if(isOverlapping(manualThermals[i], p))
+            {
+                iterationCount++
+                continue GenerationLoop
+            }
+                
+        }
         
         positions.push(p)
 
@@ -499,7 +545,7 @@ function generateThermals(){
 
     addHistory()
 
-    clearMarkers()
+    clearMarkers(false)
 
     circleMarker = []
     thermals = []
@@ -547,7 +593,7 @@ function generateThermals(){
         let diameter = positions[i].diameter
 
         // Generate other parameters
-        let height = Math.round(rnd(minHeight, maxHeight + 1) / 100) * 100
+        let height = Math.round(rnd(minHeight, maxHeight + 1) / 50) * 50
         let speed = Math.round(rnd(minSpeed, maxSpeed + 1))
 
         let t = {
@@ -560,7 +606,7 @@ function generateThermals(){
         
         thermals.push(t)
 
-        addThermalToMap(i, latlng, height, diameter, speed)
+        addThermalToMap(i, latlng, height, diameter, speed, false)
         
         lastID = i
         
@@ -666,10 +712,12 @@ function loadThermals(file){
         addHistory()
 
         // Empty global arrays and clear markers
-        clearMarkers()
+        clearMarkers(true)
 
         circleMarker = []
         thermals = []
+        manualCircleMarker = []
+        manualThermals = []
         lastID = 0
 
         for(var i = 0; i < lbreak.length; i++){
@@ -683,14 +731,16 @@ function loadThermals(file){
                 'latlng': p,
                 'height': line[5],
                 'diameter': line[7].split(" ")[0],
-                'speed': line[7].split(" ")[1]
+                'speed': line[7].split(" ")[1],
+                'manual': line[8] == 'true'
             }
 
-            console.log(t)
+            if(t.manual == true)
+                manualThermals.push(t)
+            else
+                thermals.push(t)
         
-            thermals.push(t)
-        
-            addThermalToMap(t.id, t.latlng, t.height, t.diameter, t.speed)
+            addThermalToMap(t.id, t.latlng, t.height, t.diameter, t.speed, t.manual)
 
             lastID++;
             
@@ -717,7 +767,16 @@ function saveAsCSV(option) {
         
                 let circle = circleMarker[i]
                 
-                var row = 'Location, ,thermal,' + circle._latlng.lat.toFixed(5) + ',' + circle._latlng.lng.toFixed(5) + ',' + circle.options.height + ', ,' + circle.options.diameter + ' ' + circle.options.speed
+                var row = 'Location, ,thermal,' + circle._latlng.lat.toFixed(5) + ',' + circle._latlng.lng.toFixed(5) + ',' + circle.options.height + ', ,' + circle.options.diameter + ' ' + circle.options.speed + ',false'
+        
+                csv_data.push(row)
+            }
+            // Convert all thermals
+            for (var i = 0; i < manualCircleMarker.length; i++) {
+        
+                let circle = manualCircleMarker[i]
+                
+                var row = 'Location, ,thermal,' + circle._latlng.lat.toFixed(5) + ',' + circle._latlng.lng.toFixed(5) + ',' + circle.options.height + ', ,' + circle.options.diameter + ' ' + circle.options.speed + ',true'
         
                 csv_data.push(row)
             }

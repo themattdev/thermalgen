@@ -29,7 +29,7 @@
             <div id="map"> </div>
         
             <div class="inputWrapper">
-                <div class="version" onclick="setElementHiddenState('changeLog', false)">v 2.3.0</div>
+                <div class="version" onclick="setElementHiddenState('changeLog', false)">v 2.4.0</div>
 
                 <div class="controls">
                     <div id="moveMode" class="controlBtn move active" onclick="setMode(0)"></div>
@@ -48,8 +48,8 @@
                 </div>
 
                 <label for="count">Count</label><input type="number" id="count" value="50"> 
-                <label for="heightMin">Height Min (m)</label><input type="number" id="heightMin" value="-500"> 
-                <label for="heightMax">Height Max (m)</label><input type="number" id="heightMax" value="500">
+                <label for="heightMin">Height Min (feet)</label><input type="number" id="heightMin" value="-500"> 
+                <label for="heightMax">Height Max (feet)</label><input type="number" id="heightMax" value="500">
 
                 <label for="diameterMin">Diameter Min (nm)</label><input type="number" id="diameterMin" value="0.3">
                 <label for="diameterMax">Diameter Max (nm)</label><input type="number" id="diameterMax" value="0.5">
@@ -69,32 +69,56 @@
                 <div class="wrapperContent">
                     <div class="closeButton" onclick="setElementHiddenState('changeLog', true)"></div>
                     <h1>Changelog</h1>
+                    <h2>v 2.4.0 22.04.2022</h2>
+                    <ul>
+                        <li>Seperated generated and manual thermals</li>
+                        <li>Changed metric for height from m to feet</li>
+                        <li>Changed default values for height parameter</li>
+                    </ul>
+
                     <h2>v 2.3.0 21.04.2022</h2>
-                    <p>Added option to load thermals</p>
+                    <ul>
+                        <li>Added option to load thermals</li>
+                    </ul>
+                    
                     <h2>v 2.2.2 16.04.2022</h2>
-                    <p>Scaled display of thermals to match kinetic assistant</p>
+                    <ul>
+                        <li>Scaled display of thermals to match kinetic assistant</li>
+                    </ul>
                     <h2>v 2.2.1 02.04.2022</h2>
-                    <p>Fixed a bug where generated thermals would still be visible after using undo</p>
-                    <p>Fixed a bug where manually added thermals would still be in the csv after manually deleting them</p>
+                    <ul>
+                        <li>Fixed a bug where generated thermals would still be visible after using undo</li>
+                        <li>Fixed a bug where manually added thermals would still be in the csv after manually deleting them</li>
+                    </ul>
                     <h2>v 2.2.0 01.04.2022</h2>
-                    <p>Added confirmation dialogue for resetting</p>
-                    <p>Changed color for boundary holes</p>
-                    <p>Fixed a bug that froze the application when generating thermals after loading a boundary</p>
-                    <p>Optimzed the ui</p>
+                    <ul>
+                        <li>Added confirmation dialogue for resetting</li>
+                        <li>Changed color for boundary holes</li>
+                        <li>Fixed a bug that froze the application when generating thermals after loading a boundary</li>
+                        <li>Optimzed the ui</li>
+                    </ul>
                     <h2>v 2.1.0 31.03.2022</h2>
-                    <p>Added tools for saving and loading boundary</p>
-                    <p>Added tool for creating boundary holes</p>
-                    <p>Added tool for undo last action</p>
+                    <ul>
+                        <li>Added tools for saving and loading boundary</li>
+                        <li>Added tool for creating boundary holes</li>
+                        <li>Added tool for undo last action</li>
+                    </ul>
                     <h2>v 2.0.0 25.02.2022</h2>
-                    <p>Added tool for manually adding thermals</p>
-                    <p>Added tool for deleting thermals</p>
-                    <p>Optimized generation of thermals</p>
+                    <ul>
+                        <li>Added tool for manually adding thermals</li>
+                        <li>Added tool for deleting thermals</li>
+                        <li>Optimized generation of thermals</li>
+                    </ul>
                     <h2>v 1.0.1 21.02.2022</h2>
-                    <p>Removed overlapping thermals</p>
-                    <p>Changed parameter count to iterations</p>
-                    <p>Added counter for generated thermals</p>
+                    <ul>
+                        <li>Removed overlapping thermals</li>
+                        <li>Changed parameter count to iterations</li>
+                        <li>Added counter for generated thermals</li>
+                    </ul>
                     <h2>v 1.0.0 15.02.2022</h2>
-                    <p>Initial Release</p>
+                    <ul>
+                        <li>Initial Release</li>
+                    </ul>
                 </div>  
             </div>
 
@@ -102,7 +126,7 @@
                 <div class="wrapperContent gap flex">
                     <label for="lat">Lat</label><input type="number" id="lat" value="" disabled> 
                     <label for="lng">Lng</label><input type="number" id="lng" value="" disabled> 
-                    <label for="height">Height (m)</label><input type="number" id="height" value="8000"> 
+                    <label for="height">Height difference to KA (feet)</label><input type="number" id="height" value="0"> 
                     <label for="diameter">Diameter (nm)</label><input type="number" id="diameter" value="0.3">
                     <label for="speed">Speed (kn)</label><input type="number" id="speed" value="4">
                     <div class="dialogButtons">
